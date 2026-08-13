@@ -22,10 +22,14 @@
   var btnCalcular = document.getElementById('btnCalcular');
   var btnCopiarResumo = document.getElementById('btnCopiarResumo');
   var copyFeedback = document.getElementById('copyFeedback');
+  var btnCopiarAgrupamento = document.getElementById('btnCopiarAgrupamento');
+  var copyAgrupamentoFeedback = document.getElementById('copyAgrupamentoFeedback');
+  var agrupamentoSection = document.getElementById('agrupamentoSection');
+  var agrupamentoParcelas = document.getElementById('agrupamentoParcelas');
   var btnCopiarEvolucao = document.getElementById('btnCopiarEvolucao');
   var copyEvolucaoFeedback = document.getElementById('copyEvolucaoFeedback');
   var evolucaoSection = document.getElementById('evolucaoSection');
-  var agrupamentoParcelas = document.getElementById('agrupamentoParcelas');
+  var evolucaoParcelas = document.getElementById('evolucaoParcelas');
   var segmentoSelect = document.getElementById('segmentoSelect');
   var indiceSelect = document.getElementById('indiceSelect');
   var administradoraInput = document.getElementById('administradoraInput');
@@ -34,6 +38,7 @@
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
   var lastSummaryText = '';
+  var lastAgrupamentoText = '';
   var lastEvolucaoText = '';
 
   function currencyToCents(str) {
@@ -127,8 +132,11 @@
       document.getElementById(id).textContent = '–';
     });
     agrupamentoParcelas.innerHTML = '';
+    agrupamentoSection.hidden = true;
+    evolucaoParcelas.innerHTML = '';
     evolucaoSection.hidden = true;
     lastSummaryText = '';
+    lastAgrupamentoText = '';
     lastEvolucaoText = '';
   }
 
@@ -175,7 +183,8 @@
       while (i < monthlyTotals.length && Math.abs(monthlyTotals[i] - value) < 0.005) {
         i++;
       }
-      groups.push({ from: start + 1, to: i, value: value });
+      var count = i - start;
+      groups.push({ from: start + 1, to: i, count: count, value: value, subtotal: value * count });
     }
     return groups;
   }
@@ -184,10 +193,18 @@
     return g.from === g.to ? ('Mês ' + g.from) : ('Mês ' + g.from + ' a ' + g.to);
   }
 
-  function renderInstallmentGroups(groups) {
+  function periodLabelEvolucao(g, index) {
+    return (index + 1) + 'º período (' + periodLabel(g) + ')';
+  }
+
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  function renderAgrupamento(groups) {
     if (!groups.length) {
       agrupamentoParcelas.innerHTML = '';
-      evolucaoSection.hidden = true;
+      agrupamentoSection.hidden = true;
       return;
     }
     var html = '<div class="installment-list">';
@@ -199,15 +216,43 @@
     });
     html += '</div>';
     agrupamentoParcelas.innerHTML = html;
-    evolucaoSection.hidden = false;
+    agrupamentoSection.hidden = false;
   }
 
-  function buildEvolucaoText(groups) {
+  function buildAgrupamentoText(groups) {
     var lines = [];
     lines.push('*Agrupamento das parcelas – contemplei*');
     lines.push('');
     groups.forEach(function (g) {
       lines.push(periodLabel(g) + ': ' + formatBRL(g.value));
+    });
+    return lines.join('\n');
+  }
+
+  function renderEvolucao(groups) {
+    if (!groups.length) {
+      evolucaoParcelas.innerHTML = '';
+      evolucaoSection.hidden = true;
+      return;
+    }
+    var html = '<div class="installment-list">';
+    groups.forEach(function (g, index) {
+      html += '<div class="installment-group">' +
+        '<span class="range">' + periodLabelEvolucao(g, index) + '</span>' +
+        '<span class="value">' + g.count + 'x ' + formatBRL(g.value) + ' <span class="subtotal">(subtotal ' + formatBRL(g.subtotal) + ')</span></span>' +
+        '</div>';
+    });
+    html += '</div>';
+    evolucaoParcelas.innerHTML = html;
+    evolucaoSection.hidden = false;
+  }
+
+  function buildEvolucaoText(groups) {
+    var lines = [];
+    lines.push('*Evolução das Parcelas – contemplei*');
+    lines.push('');
+    groups.forEach(function (g, index) {
+      lines.push(capitalize(periodLabelEvolucao(g, index)) + ': ' + g.count + 'x ' + formatBRL(g.value) + ' (subtotal ' + formatBRL(g.subtotal) + ')');
     });
     return lines.join('\n');
   }
@@ -265,7 +310,9 @@
     document.getElementById('cetAnual').textContent = cetAnual !== null ? (formatPercent(cetAnual) + ' + ' + indiceLabel) : 'N/A';
 
     var groups = groupPayments(monthlyTotals);
-    renderInstallmentGroups(groups);
+    renderAgrupamento(groups);
+    renderEvolucao(groups);
+    lastAgrupamentoText = buildAgrupamentoText(groups);
     lastEvolucaoText = buildEvolucaoText(groups);
 
     lastSummaryText = buildSummaryText(cards, groups, {
@@ -330,9 +377,27 @@
     }
   }
 
+  function copyAgrupamento() {
+    if (!lastAgrupamentoText) {
+      showError('Calcule o custo efetivo antes de copiar o agrupamento das parcelas.');
+      return;
+    }
+    var done = function () {
+      copyAgrupamentoFeedback.classList.add('visible');
+      setTimeout(function () { copyAgrupamentoFeedback.classList.remove('visible'); }, 2500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(lastAgrupamentoText).then(done).catch(function () {
+        fallbackCopy(lastAgrupamentoText, done);
+      });
+    } else {
+      fallbackCopy(lastAgrupamentoText, done);
+    }
+  }
+
   function copyEvolucao() {
     if (!lastEvolucaoText) {
-      showError('Calcule o custo efetivo antes de copiar o agrupamento das parcelas.');
+      showError('Calcule o custo efetivo antes de copiar a evolução das parcelas.');
       return;
     }
     var done = function () {
@@ -363,6 +428,7 @@
   btnLimpar.addEventListener('click', clearFields);
   btnCalcular.addEventListener('click', calcular);
   btnCopiarResumo.addEventListener('click', copySummary);
+  btnCopiarAgrupamento.addEventListener('click', copyAgrupamento);
   btnCopiarEvolucao.addEventListener('click', copyEvolucao);
 
   addCard();

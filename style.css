@@ -432,6 +432,14 @@ header {
   font-size: 12px;
 }
 
+.layout + .installment-card {
+  margin-top: 32px;
+}
+
+.installment-card + .installment-card {
+  margin-top: 24px;
+}
+
 .installment-card h2 {
   margin-bottom: 6px;
 }

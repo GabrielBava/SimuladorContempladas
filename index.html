@@ -160,17 +160,31 @@
       </section>
     </div>
 
-    <section class="card installment-card" aria-label="Agrupamento das parcelas" id="evolucaoSection" hidden>
+    <section class="card installment-card" aria-label="Agrupamento das parcelas" id="agrupamentoSection" hidden>
       <h2>Agrupamento das Parcelas</h2>
       <p class="disclaimer-note">Agrupado por faixa de meses com valor constante — visualize e, se quiser, copie separadamente para enviar ao cliente.</p>
 
       <div id="agrupamentoParcelas" class="installment-summary"></div>
 
       <div class="copy-row">
-        <button type="button" class="btn-ghost" id="btnCopiarEvolucao">
+        <button type="button" class="btn-ghost" id="btnCopiarAgrupamento">
           Copiar agrupamento de parcelas
         </button>
-        <span id="copyEvolucaoFeedback" class="copy-feedback">Agrupamento copiado! Cole no WhatsApp.</span>
+        <span id="copyAgrupamentoFeedback" class="copy-feedback">Agrupamento copiado! Cole no WhatsApp.</span>
+      </div>
+    </section>
+
+    <section class="card installment-card" aria-label="Evolução das parcelas" id="evolucaoSection" hidden>
+      <h2>Evolução das Parcelas</h2>
+      <p class="disclaimer-note">Detalhamento por período, com quantidade de parcelas e subtotal — visualize e, se quiser, copie separadamente para enviar ao cliente.</p>
+
+      <div id="evolucaoParcelas" class="installment-summary"></div>
+
+      <div class="copy-row">
+        <button type="button" class="btn-ghost" id="btnCopiarEvolucao">
+          Copiar evolução de parcelas
+        </button>
+        <span id="copyEvolucaoFeedback" class="copy-feedback">Evolução copiada! Cole no WhatsApp.</span>
       </div>
     </section>
 

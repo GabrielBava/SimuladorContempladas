@@ -36,6 +36,31 @@
       <section class="card" aria-label="Simulação de consórcio">
         <h2>Preencha as cartas contempladas</h2>
 
+        <div class="global-options">
+          <div class="field">
+            <label>Segmento da carta</label>
+            <small>Facilita a identificação do resumo pelo cliente</small>
+            <select id="segmentoSelect">
+              <option value="">Selecione o segmento</option>
+              <option value="IMOVEL">Imóvel</option>
+              <option value="VEICULO">Veículo</option>
+              <option value="SERVICO">Serviço</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Índice de reajuste</label>
+            <small>Aplicado a todas as cartas da simulação</small>
+            <select id="indiceSelect">
+              <option value="">Selecione o índice</option>
+              <option value="INCC">INCC</option>
+              <option value="IPCA">IPCA</option>
+              <option value="INPC">INPC</option>
+              <option value="PRE">PRÉ-FIXADO 5%</option>
+            </select>
+          </div>
+        </div>
+
         <div id="cardsContainer"></div>
 
         <template id="cardTemplate">
@@ -67,18 +92,6 @@
                 <label>Prazo restante</label>
                 <small>Quantidade de parcelas a pagar</small>
                 <input type="text" inputmode="numeric" class="input-prazo prazo" placeholder="Ex: 233 meses">
-              </div>
-
-              <div class="field">
-                <label>Reajuste anual</label>
-                <small>Índice de correção</small>
-                <select class="reajuste-select">
-                  <option value="">Selecione o índice</option>
-                  <option value="INCC">INCC</option>
-                  <option value="IPCA">IPCA</option>
-                  <option value="INPC">INPC</option>
-                  <option value="PRE">PRÉ-FIXADO 5%</option>
-                </select>
               </div>
             </div>
           </div>
@@ -132,8 +145,6 @@
           </div>
         </div>
 
-        <div id="agrupamentoParcelas" class="installment-summary"></div>
-
         <div class="copy-row">
           <button type="button" class="btn-ghost" id="btnCopiarResumo">
             Copiar resumo para WhatsApp
@@ -142,6 +153,20 @@
         </div>
       </section>
     </div>
+
+    <section class="card installment-card" aria-label="Evolução das parcelas" id="evolucaoSection" hidden>
+      <h2>Evolução das Parcelas</h2>
+      <p class="disclaimer-note">Agrupada por período de reajuste — visualize e, se quiser, copie separadamente para enviar ao cliente.</p>
+
+      <div id="agrupamentoParcelas" class="installment-summary"></div>
+
+      <div class="copy-row">
+        <button type="button" class="btn-ghost" id="btnCopiarEvolucao">
+          Copiar evolução de parcelas
+        </button>
+        <span id="copyEvolucaoFeedback" class="copy-feedback">Evolução copiada! Cole no WhatsApp.</span>
+      </div>
+    </section>
 
     <footer>
       <span>© <span id="year">2026</span> contemplei – uso educativo, não é recomendação de investimento.</span>

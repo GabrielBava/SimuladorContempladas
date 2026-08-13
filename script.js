@@ -15,6 +15,12 @@
     PRE: 'Pré-fixado 5%'
   };
 
+  var SEGMENTO_LABELS = {
+    IMOVEL: 'Imóvel',
+    VEICULO: 'Veículo',
+    SERVICO: 'Serviço'
+  };
+
   var cardsContainer = document.getElementById('cardsContainer');
   var cardTemplate = document.getElementById('cardTemplate');
   var errorBox = document.getElementById('error');
@@ -23,12 +29,18 @@
   var btnCalcular = document.getElementById('btnCalcular');
   var btnCopiarResumo = document.getElementById('btnCopiarResumo');
   var copyFeedback = document.getElementById('copyFeedback');
+  var btnCopiarEvolucao = document.getElementById('btnCopiarEvolucao');
+  var copyEvolucaoFeedback = document.getElementById('copyEvolucaoFeedback');
+  var evolucaoSection = document.getElementById('evolucaoSection');
   var agrupamentoParcelas = document.getElementById('agrupamentoParcelas');
+  var segmentoSelect = document.getElementById('segmentoSelect');
+  var indiceSelect = document.getElementById('indiceSelect');
 
   var yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
   var lastSummaryText = '';
+  var lastEvolucaoText = '';
 
   function currencyToCents(str) {
     var digits = (str || '').replace(/\D/g, '');
@@ -100,6 +112,8 @@
   function clearFields() {
     cardsContainer.innerHTML = '';
     addCard();
+    segmentoSelect.value = '';
+    indiceSelect.value = '';
     hideError();
     resetResults();
   }
@@ -118,7 +132,9 @@
       document.getElementById(id).textContent = '–';
     });
     agrupamentoParcelas.innerHTML = '';
+    evolucaoSection.hidden = true;
     lastSummaryText = '';
+    lastEvolucaoText = '';
   }
 
   function readCards() {
@@ -131,21 +147,23 @@
       var entrada = currencyToCents(row.querySelector('.entrada').value) / 100;
       var parcela = currencyToCents(row.querySelector('.parcela').value) / 100;
       var prazo = parseInt(row.querySelector('.prazo').value.replace(/\D/g, ''), 10) || 0;
-      var indice = row.querySelector('.reajuste-select').value;
 
-      if (!credito || !parcela || !prazo || !indice) {
+      if (!credito || !parcela || !prazo) {
         invalid = true;
       }
 
-      cards.push({ credito: credito, entrada: entrada, parcela: parcela, prazo: prazo, indice: indice });
+      cards.push({ credito: credito, entrada: entrada, parcela: parcela, prazo: prazo });
     });
+
+    if (!segmentoSelect.value || !indiceSelect.value) {
+      invalid = true;
+    }
 
     if (invalid) return null;
     return cards;
   }
 
-  function buildMonthlyPayments(card) {
-    var rate = ANNUAL_INDEX_RATES[card.indice] || 0;
+  function buildMonthlyPayments(card, rate) {
     var payments = [];
     for (var t = 1; t <= card.prazo; t++) {
       var yearsElapsed = Math.floor((t - 1) / 12);
@@ -187,24 +205,47 @@
       while (i < monthlyTotals.length && Math.abs(monthlyTotals[i] - value) < 0.005) {
         i++;
       }
-      groups.push({ from: start + 1, to: i, value: value });
+      var count = i - start;
+      groups.push({ from: start + 1, to: i, count: count, value: value, subtotal: value * count });
     }
     return groups;
+  }
+
+  function periodLabel(g, index) {
+    var rangeLabel = g.from === g.to ? ('mês ' + g.from) : ('meses ' + g.from + '–' + g.to);
+    return (index + 1) + 'º período (' + rangeLabel + ')';
   }
 
   function renderInstallmentGroups(groups) {
     if (!groups.length) {
       agrupamentoParcelas.innerHTML = '';
+      evolucaoSection.hidden = true;
       return;
     }
-    var html = '<h3>Evolução das parcelas (soma de todas as cartas)</h3><div class="installment-list">';
-    groups.forEach(function (g) {
-      var rangeLabel = g.from === g.to ? ('Mês ' + g.from) : ('Meses ' + g.from + '–' + g.to);
-      html += '<div class="installment-group"><span class="range">' + rangeLabel + '</span>' +
-        '<span class="value">' + formatBRL(g.value) + ' / mês</span></div>';
+    var html = '<div class="installment-list">';
+    groups.forEach(function (g, index) {
+      html += '<div class="installment-group">' +
+        '<span class="range">' + periodLabel(g, index) + '</span>' +
+        '<span class="value">' + g.count + 'x ' + formatBRL(g.value) + ' <span class="subtotal">(subtotal ' + formatBRL(g.subtotal) + ')</span></span>' +
+        '</div>';
     });
     html += '</div>';
     agrupamentoParcelas.innerHTML = html;
+    evolucaoSection.hidden = false;
+  }
+
+  function buildEvolucaoText(groups) {
+    var lines = [];
+    lines.push('*Evolução das Parcelas – contemplei*');
+    lines.push('');
+    groups.forEach(function (g, index) {
+      lines.push(capitalize(periodLabel(g, index)) + ': ' + g.count + 'x ' + formatBRL(g.value) + ' (subtotal ' + formatBRL(g.subtotal) + ')');
+    });
+    return lines.join('\n');
+  }
+
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
   function calcular() {
@@ -212,11 +253,12 @@
     var cards = readCards();
 
     if (!cards || !cards.length) {
-      showError('Preencha crédito, parcela, prazo e índice de reajuste em todas as cartas antes de calcular.');
+      showError('Preencha crédito, parcela e prazo em todas as cartas, e selecione o segmento e o índice de reajuste, antes de calcular.');
       resetResults();
       return;
     }
 
+    var rate = ANNUAL_INDEX_RATES[indiceSelect.value] || 0;
     var totalCredito = 0;
     var totalEntrada = 0;
     var totalSaldoDevedor = 0;
@@ -227,7 +269,7 @@
       totalCredito += card.credito;
       totalEntrada += card.entrada;
       maxPrazo = Math.max(maxPrazo, card.prazo);
-      var payments = buildMonthlyPayments(card);
+      var payments = buildMonthlyPayments(card, rate);
       perCardPayments.push(payments);
       totalSaldoDevedor += payments.reduce(function (a, b) { return a + b; }, 0);
     });
@@ -258,8 +300,9 @@
 
     var groups = groupPayments(monthlyTotals);
     renderInstallmentGroups(groups);
+    lastEvolucaoText = buildEvolucaoText(groups);
 
-    lastSummaryText = buildSummaryText(cards, {
+    lastSummaryText = buildSummaryText(cards, groups, {
       creditoLiquido: creditoLiquido,
       totalSaldoDevedor: totalSaldoDevedor,
       custoTotalReais: custoTotalReais,
@@ -269,13 +312,15 @@
     });
   }
 
-  function buildSummaryText(cards, r) {
+  function buildSummaryText(cards, groups, r) {
     var lines = [];
     lines.push('*Simulação contemplei – Custo da Carta Contemplada*');
+    lines.push('Segmento: ' + (SEGMENTO_LABELS[segmentoSelect.value] || segmentoSelect.value));
+    lines.push('Índice de reajuste: ' + (INDEX_LABELS[indiceSelect.value] || indiceSelect.value));
     lines.push('');
     cards.forEach(function (card, i) {
       lines.push('Carta #' + (i + 1) + ': ' + formatBRL(card.credito) + ' | entrada ' + formatBRL(card.entrada) +
-        ' | parcela ' + formatBRL(card.parcela) + ' x ' + card.prazo + ' meses (' + (INDEX_LABELS[card.indice] || card.indice) + ')');
+        ' | parcela ' + formatBRL(card.parcela) + ' x ' + card.prazo + ' meses');
     });
     lines.push('');
     lines.push('Crédito líquido total recebido: ' + formatBRL(r.creditoLiquido));
@@ -283,6 +328,15 @@
     lines.push('Custo total da operação: ' + formatBRL(r.custoTotalReais) + ' (' + formatPercent(r.custoTotalPercent) + ')');
     lines.push('CET mensal aproximado: ' + (r.cetMensal !== null ? formatPercent(r.cetMensal * 100) : 'N/A'));
     lines.push('CET anual aproximado: ' + (r.cetAnual !== null ? formatPercent(r.cetAnual * 100) : 'N/A'));
+
+    if (groups.length) {
+      lines.push('');
+      lines.push('*Evolução das parcelas:*');
+      groups.forEach(function (g, index) {
+        lines.push(capitalize(periodLabel(g, index)) + ': ' + g.count + 'x ' + formatBRL(g.value) + ' (subtotal ' + formatBRL(g.subtotal) + ')');
+      });
+    }
+
     lines.push('');
     lines.push('Simulação educativa – contemplei');
     return lines.join('\n');
@@ -306,6 +360,24 @@
     }
   }
 
+  function copyEvolucao() {
+    if (!lastEvolucaoText) {
+      showError('Calcule o custo efetivo antes de copiar a evolução das parcelas.');
+      return;
+    }
+    var done = function () {
+      copyEvolucaoFeedback.classList.add('visible');
+      setTimeout(function () { copyEvolucaoFeedback.classList.remove('visible'); }, 2500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(lastEvolucaoText).then(done).catch(function () {
+        fallbackCopy(lastEvolucaoText, done);
+      });
+    } else {
+      fallbackCopy(lastEvolucaoText, done);
+    }
+  }
+
   function fallbackCopy(text, done) {
     var textarea = document.createElement('textarea');
     textarea.value = text;
@@ -321,6 +393,7 @@
   btnLimpar.addEventListener('click', clearFields);
   btnCalcular.addEventListener('click', calcular);
   btnCopiarResumo.addEventListener('click', copySummary);
+  btnCopiarEvolucao.addEventListener('click', copyEvolucao);
 
   addCard();
 })();

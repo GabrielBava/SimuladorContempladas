@@ -316,10 +316,9 @@
     lastEvolucaoText = buildEvolucaoText(groups);
 
     lastSummaryText = buildSummaryText(cards, groups, {
-      creditoLiquido: creditoLiquido,
+      totalCredito: totalCredito,
+      totalEntrada: totalEntrada,
       totalSaldoDevedor: totalSaldoDevedor,
-      custoTotalReais: custoTotalReais,
-      custoTotalPercent: custoTotalPercent,
       cetMensal: cetMensal,
       cetAnual: cetAnual,
       indiceLabel: indiceLabel
@@ -327,35 +326,45 @@
   }
 
   function buildSummaryText(cards, groups, r) {
+    var segmentoLabel = SEGMENTO_LABELS[segmentoSelect.value] || segmentoSelect.value;
+    var entradaPercent = r.totalCredito !== 0 ? (r.totalEntrada / r.totalCredito) * 100 : 0;
+    var transferEstimate = r.totalCredito * 0.01;
+
     var lines = [];
-    lines.push('*Simulação contemplei – Custo da Carta Contemplada*');
-    lines.push('Segmento: ' + (SEGMENTO_LABELS[segmentoSelect.value] || segmentoSelect.value));
+    lines.push('📊 *Simulação Contemplei | Carta Contemplada – ' + segmentoLabel + '*');
+    lines.push('');
+    lines.push('→ Segmento: ' + segmentoLabel);
     if (administradoraInput.value.trim()) {
-      lines.push('Administradora: ' + administradoraInput.value.trim());
+      lines.push('→ Administradora: ' + administradoraInput.value.trim());
     }
-    lines.push('Índice de reajuste: ' + r.indiceLabel);
+    lines.push('→ Índice de reajuste: ' + r.indiceLabel);
     lines.push('');
     cards.forEach(function (card, i) {
       lines.push('Carta #' + (i + 1) + ': ' + formatBRL(card.credito) + ' | entrada ' + formatBRL(card.entrada) +
         ' | parcela ' + formatBRL(card.parcela) + ' x ' + card.prazo + ' meses');
     });
     lines.push('');
-    lines.push('Crédito líquido total recebido: ' + formatBRL(r.creditoLiquido));
-    lines.push('Saldo devedor total: ' + formatBRL(r.totalSaldoDevedor));
-    lines.push('Custo total da operação: ' + formatBRL(r.custoTotalReais) + ' (' + (r.custoTotalPercent !== null ? formatPercent(r.custoTotalPercent) : 'N/A') + ')');
-    lines.push('CET mensal aproximado: ' + (r.cetMensal !== null ? formatPercent(r.cetMensal) : 'N/A'));
-    lines.push('CET anual aproximado: ' + (r.cetAnual !== null ? (formatPercent(r.cetAnual) + ' + ' + r.indiceLabel) : 'N/A'));
+    lines.push('💰 *Resumo financeiro*');
+    lines.push('');
+    lines.push('• *Crédito total (R$):* ' + formatBRL(r.totalCredito));
+    lines.push('• *Entrada (R$):* ' + formatBRL(r.totalEntrada) + ' _(' + formatPercent(entradaPercent) + ')_');
+    lines.push('• *Saldo devedor:* ' + formatBRL(r.totalSaldoDevedor));
+    lines.push('• *CET aprox.:* ' + (r.cetMensal !== null ? formatPercent(r.cetMensal) : 'N/A') + ' a.m. | ' +
+      (r.cetAnual !== null ? formatPercent(r.cetAnual) : 'N/A') + ' a.a. + ' + r.indiceLabel);
+    lines.push('• *Estimativa Transferência:* ' + formatBRL(transferEstimate) + ' (1% Crédito)');
 
     if (groups.length) {
       lines.push('');
-      lines.push('*Agrupamento das parcelas:*');
+      lines.push('📆 *Fluxo das parcelas*');
       groups.forEach(function (g) {
-        lines.push(periodLabel(g) + ': ' + formatBRL(g.value));
+        lines.push('→ ' + periodLabel(g) + ': ' + formatBRL(g.value));
       });
     }
 
     lines.push('');
-    lines.push('Simulação educativa – contemplei');
+    lines.push('🌐 Conheça a Contemplei:');
+    lines.push('https://contemplei.app/');
+
     return lines.join('\n');
   }
 

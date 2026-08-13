@@ -49,6 +49,12 @@
           </div>
 
           <div class="field">
+            <label>Administradora</label>
+            <small>Administradora responsável pela cota</small>
+            <input type="text" id="administradoraInput" placeholder="Ex: Porto Consórcio">
+          </div>
+
+          <div class="field">
             <label>Índice de reajuste</label>
             <small>Aplicado a todas as cartas da simulação</small>
             <select id="indiceSelect">
@@ -97,7 +103,7 @@
           </div>
         </template>
 
-        <p class="disclaimer-note">*Simulação usa índices médios estimados para reajuste anual (INCC 6%, IPCA/INPC 4,5%, Pré-fixado 5%). Ajuste sua expectativa conforme o índice real de cada administradora.</p>
+        <p class="disclaimer-note">*Os cálculos usam os valores de parcela informados, sem projetar reajustes futuros. O índice de reajuste selecionado é informativo e aparece junto ao CET anual, já que a correção real depende do índice contratado com a administradora.</p>
 
         <div class="button-row">
           <div id="error" class="error-msg" style="display:none;"></div>
@@ -154,17 +160,17 @@
       </section>
     </div>
 
-    <section class="card installment-card" aria-label="Evolução das parcelas" id="evolucaoSection" hidden>
-      <h2>Evolução das Parcelas</h2>
-      <p class="disclaimer-note">Agrupada por período de reajuste — visualize e, se quiser, copie separadamente para enviar ao cliente.</p>
+    <section class="card installment-card" aria-label="Agrupamento das parcelas" id="evolucaoSection" hidden>
+      <h2>Agrupamento das Parcelas</h2>
+      <p class="disclaimer-note">Agrupado por faixa de meses com valor constante — visualize e, se quiser, copie separadamente para enviar ao cliente.</p>
 
       <div id="agrupamentoParcelas" class="installment-summary"></div>
 
       <div class="copy-row">
         <button type="button" class="btn-ghost" id="btnCopiarEvolucao">
-          Copiar evolução de parcelas
+          Copiar agrupamento de parcelas
         </button>
-        <span id="copyEvolucaoFeedback" class="copy-feedback">Evolução copiada! Cole no WhatsApp.</span>
+        <span id="copyEvolucaoFeedback" class="copy-feedback">Agrupamento copiado! Cole no WhatsApp.</span>
       </div>
     </section>
 

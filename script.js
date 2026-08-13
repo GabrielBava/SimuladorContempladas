@@ -1,13 +1,6 @@
 (function () {
   'use strict';
 
-  var ANNUAL_INDEX_RATES = {
-    INCC: 0.06,
-    IPCA: 0.045,
-    INPC: 0.045,
-    PRE: 0.05
-  };
-
   var INDEX_LABELS = {
     INCC: 'INCC',
     IPCA: 'IPCA',
@@ -35,6 +28,7 @@
   var agrupamentoParcelas = document.getElementById('agrupamentoParcelas');
   var segmentoSelect = document.getElementById('segmentoSelect');
   var indiceSelect = document.getElementById('indiceSelect');
+  var administradoraInput = document.getElementById('administradoraInput');
 
   var yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
@@ -114,6 +108,7 @@
     addCard();
     segmentoSelect.value = '';
     indiceSelect.value = '';
+    administradoraInput.value = '';
     hideError();
     resetResults();
   }
@@ -163,37 +158,12 @@
     return cards;
   }
 
-  function buildMonthlyPayments(card, rate) {
+  function buildMonthlyPayments(card) {
     var payments = [];
     for (var t = 1; t <= card.prazo; t++) {
-      var yearsElapsed = Math.floor((t - 1) / 12);
-      var value = card.parcela * Math.pow(1 + rate, yearsElapsed);
-      payments.push(value);
+      payments.push(card.parcela);
     }
     return payments;
-  }
-
-  function solveMonthlyIRR(cf0, payments) {
-    function npv(i) {
-      var v = cf0;
-      for (var t = 0; t < payments.length; t++) {
-        v -= payments[t] / Math.pow(1 + i, t + 1);
-      }
-      return v;
-    }
-
-    var lo = -0.9, hi = 5;
-    var nlo = npv(lo), nhi = npv(hi);
-
-    if (!isFinite(nlo) || !isFinite(nhi) || nlo * nhi > 0) return null;
-
-    for (var iter = 0; iter < 100; iter++) {
-      var mid = (lo + hi) / 2;
-      var nm = npv(mid);
-      if (Math.abs(nm) < 1e-7) return mid;
-      if ((nlo < 0) === (nm < 0)) { lo = mid; nlo = nm; } else { hi = mid; }
-    }
-    return (lo + hi) / 2;
   }
 
   function groupPayments(monthlyTotals) {
@@ -205,15 +175,13 @@
       while (i < monthlyTotals.length && Math.abs(monthlyTotals[i] - value) < 0.005) {
         i++;
       }
-      var count = i - start;
-      groups.push({ from: start + 1, to: i, count: count, value: value, subtotal: value * count });
+      groups.push({ from: start + 1, to: i, value: value });
     }
     return groups;
   }
 
-  function periodLabel(g, index) {
-    var rangeLabel = g.from === g.to ? ('mês ' + g.from) : ('meses ' + g.from + '–' + g.to);
-    return (index + 1) + 'º período (' + rangeLabel + ')';
+  function periodLabel(g) {
+    return g.from === g.to ? ('Mês ' + g.from) : ('Mês ' + g.from + ' a ' + g.to);
   }
 
   function renderInstallmentGroups(groups) {
@@ -223,10 +191,10 @@
       return;
     }
     var html = '<div class="installment-list">';
-    groups.forEach(function (g, index) {
+    groups.forEach(function (g) {
       html += '<div class="installment-group">' +
-        '<span class="range">' + periodLabel(g, index) + '</span>' +
-        '<span class="value">' + g.count + 'x ' + formatBRL(g.value) + ' <span class="subtotal">(subtotal ' + formatBRL(g.subtotal) + ')</span></span>' +
+        '<span class="range">' + periodLabel(g) + '</span>' +
+        '<span class="value">' + formatBRL(g.value) + '</span>' +
         '</div>';
     });
     html += '</div>';
@@ -236,16 +204,12 @@
 
   function buildEvolucaoText(groups) {
     var lines = [];
-    lines.push('*Evolução das Parcelas – contemplei*');
+    lines.push('*Agrupamento das parcelas – contemplei*');
     lines.push('');
-    groups.forEach(function (g, index) {
-      lines.push(capitalize(periodLabel(g, index)) + ': ' + g.count + 'x ' + formatBRL(g.value) + ' (subtotal ' + formatBRL(g.subtotal) + ')');
+    groups.forEach(function (g) {
+      lines.push(periodLabel(g) + ': ' + formatBRL(g.value));
     });
     return lines.join('\n');
-  }
-
-  function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
   function calcular() {
@@ -258,10 +222,10 @@
       return;
     }
 
-    var rate = ANNUAL_INDEX_RATES[indiceSelect.value] || 0;
     var totalCredito = 0;
     var totalEntrada = 0;
     var totalSaldoDevedor = 0;
+    var prazoPonderadoNumerador = 0;
     var maxPrazo = 0;
     var perCardPayments = [];
 
@@ -269,9 +233,11 @@
       totalCredito += card.credito;
       totalEntrada += card.entrada;
       maxPrazo = Math.max(maxPrazo, card.prazo);
-      var payments = buildMonthlyPayments(card, rate);
+      var payments = buildMonthlyPayments(card);
       perCardPayments.push(payments);
-      totalSaldoDevedor += payments.reduce(function (a, b) { return a + b; }, 0);
+      var saldoCarta = card.parcela * card.prazo;
+      totalSaldoDevedor += saldoCarta;
+      prazoPonderadoNumerador += card.prazo * saldoCarta;
     });
 
     var monthlyTotals = [];
@@ -285,18 +251,18 @@
 
     var creditoLiquido = totalCredito - totalEntrada;
     var custoTotalReais = (totalEntrada + totalSaldoDevedor) - totalCredito;
-    var custoTotalPercent = totalCredito > 0 ? (custoTotalReais / totalCredito) * 100 : 0;
-
-    var cf0 = totalCredito - totalEntrada;
-    var cetMensal = solveMonthlyIRR(cf0, monthlyTotals);
-    var cetAnual = cetMensal !== null ? Math.pow(1 + cetMensal, 12) - 1 : null;
+    var custoTotalPercent = creditoLiquido !== 0 ? (custoTotalReais / creditoLiquido) * 100 : null;
+    var prazoPonderado = totalSaldoDevedor !== 0 ? prazoPonderadoNumerador / totalSaldoDevedor : 0;
+    var cetMensal = (custoTotalPercent !== null && prazoPonderado) ? custoTotalPercent / prazoPonderado : null;
+    var cetAnual = cetMensal !== null ? cetMensal * 12 : null;
+    var indiceLabel = INDEX_LABELS[indiceSelect.value] || indiceSelect.value;
 
     document.getElementById('creditoLiquido').textContent = formatBRL(creditoLiquido);
     document.getElementById('saldoDevedor').textContent = formatBRL(totalSaldoDevedor);
     document.getElementById('custoTotalReais').textContent = formatBRL(custoTotalReais);
-    document.getElementById('custoTotalPercent').textContent = formatPercent(custoTotalPercent);
-    document.getElementById('cetMensal').textContent = cetMensal !== null ? formatPercent(cetMensal * 100) : 'N/A';
-    document.getElementById('cetAnual').textContent = cetAnual !== null ? formatPercent(cetAnual * 100) : 'N/A';
+    document.getElementById('custoTotalPercent').textContent = custoTotalPercent !== null ? formatPercent(custoTotalPercent) : 'N/A';
+    document.getElementById('cetMensal').textContent = cetMensal !== null ? formatPercent(cetMensal) : 'N/A';
+    document.getElementById('cetAnual').textContent = cetAnual !== null ? (formatPercent(cetAnual) + ' + ' + indiceLabel) : 'N/A';
 
     var groups = groupPayments(monthlyTotals);
     renderInstallmentGroups(groups);
@@ -308,7 +274,8 @@
       custoTotalReais: custoTotalReais,
       custoTotalPercent: custoTotalPercent,
       cetMensal: cetMensal,
-      cetAnual: cetAnual
+      cetAnual: cetAnual,
+      indiceLabel: indiceLabel
     });
   }
 
@@ -316,7 +283,10 @@
     var lines = [];
     lines.push('*Simulação contemplei – Custo da Carta Contemplada*');
     lines.push('Segmento: ' + (SEGMENTO_LABELS[segmentoSelect.value] || segmentoSelect.value));
-    lines.push('Índice de reajuste: ' + (INDEX_LABELS[indiceSelect.value] || indiceSelect.value));
+    if (administradoraInput.value.trim()) {
+      lines.push('Administradora: ' + administradoraInput.value.trim());
+    }
+    lines.push('Índice de reajuste: ' + r.indiceLabel);
     lines.push('');
     cards.forEach(function (card, i) {
       lines.push('Carta #' + (i + 1) + ': ' + formatBRL(card.credito) + ' | entrada ' + formatBRL(card.entrada) +
@@ -325,15 +295,15 @@
     lines.push('');
     lines.push('Crédito líquido total recebido: ' + formatBRL(r.creditoLiquido));
     lines.push('Saldo devedor total: ' + formatBRL(r.totalSaldoDevedor));
-    lines.push('Custo total da operação: ' + formatBRL(r.custoTotalReais) + ' (' + formatPercent(r.custoTotalPercent) + ')');
-    lines.push('CET mensal aproximado: ' + (r.cetMensal !== null ? formatPercent(r.cetMensal * 100) : 'N/A'));
-    lines.push('CET anual aproximado: ' + (r.cetAnual !== null ? formatPercent(r.cetAnual * 100) : 'N/A'));
+    lines.push('Custo total da operação: ' + formatBRL(r.custoTotalReais) + ' (' + (r.custoTotalPercent !== null ? formatPercent(r.custoTotalPercent) : 'N/A') + ')');
+    lines.push('CET mensal aproximado: ' + (r.cetMensal !== null ? formatPercent(r.cetMensal) : 'N/A'));
+    lines.push('CET anual aproximado: ' + (r.cetAnual !== null ? (formatPercent(r.cetAnual) + ' + ' + r.indiceLabel) : 'N/A'));
 
     if (groups.length) {
       lines.push('');
-      lines.push('*Evolução das parcelas:*');
-      groups.forEach(function (g, index) {
-        lines.push(capitalize(periodLabel(g, index)) + ': ' + g.count + 'x ' + formatBRL(g.value) + ' (subtotal ' + formatBRL(g.subtotal) + ')');
+      lines.push('*Agrupamento das parcelas:*');
+      groups.forEach(function (g) {
+        lines.push(periodLabel(g) + ': ' + formatBRL(g.value));
       });
     }
 
@@ -362,7 +332,7 @@
 
   function copyEvolucao() {
     if (!lastEvolucaoText) {
-      showError('Calcule o custo efetivo antes de copiar a evolução das parcelas.');
+      showError('Calcule o custo efetivo antes de copiar o agrupamento das parcelas.');
       return;
     }
     var done = function () {

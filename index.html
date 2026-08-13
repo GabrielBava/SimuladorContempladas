@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>contemplei — Calculadora de Custo da Carta Contemplada</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Calculadora do custo efetivo (CET) de cartas de consórcio contempladas.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='28' fill='%23225a41'/%3E%3Ccircle cx='52' cy='60' r='30' fill='none' stroke='%23ffffff' stroke-width='18' stroke-dasharray='146.6 41.9' stroke-dashoffset='-20.95' stroke-linecap='round'/%3E%3Ccircle cx='90' cy='84' r='10' fill='%23ffffff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="brand">
+        <svg class="logo-mark" viewBox="0 0 120 120" aria-hidden="true">
+          <rect width="120" height="120" rx="28" fill="url(#logoGrad)"/>
+          <circle cx="52" cy="60" r="30" fill="none" stroke="#ffffff" stroke-width="18"
+            stroke-dasharray="146.6 41.9" stroke-dashoffset="-20.95" stroke-linecap="round"/>
+          <circle cx="90" cy="84" r="10" fill="#ffffff"/>
+          <defs>
+            <linearGradient id="logoGrad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#2f8f65"/>
+              <stop offset="1" stop-color="#1d5c40"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="wordmark">contemplei</div>
+      </div>
+      <div class="title-block">
+        <h1>Calculadora de Custo da Carta Contemplada</h1>
+        <p>Entenda o custo efetivo do crédito que você está recebendo.</p>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="card" aria-label="Simulação de consórcio">
+        <h2>Preencha as cartas contempladas</h2>
+
+        <div id="cardsContainer"></div>
+
+        <template id="cardTemplate">
+          <div class="card-row" data-index="1">
+            <div class="card-row-header">
+              <div class="card-row-title">Carta #<span class="card-number">1</span></div>
+              <button type="button" class="btn-remove-card">Remover</button>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label>Crédito disponível</label>
+                <small>Valor da carta contemplada</small>
+                <input type="text" inputmode="numeric" class="input-currency credito" placeholder="Ex: R$ 1.200.000,00">
+              </div>
+
+              <div class="field">
+                <label>Entrada / ágio pago</label>
+                <small>O que você pagou para comprar essa carta</small>
+                <input type="text" inputmode="numeric" class="input-currency entrada" placeholder="Ex: R$ 436.800,00">
+              </div>
+
+              <div class="field">
+                <label>Parcela atual</label>
+                <small>Valor da prestação mensal</small>
+                <input type="text" inputmode="numeric" class="input-currency parcela" placeholder="Ex: R$ 6.165,60">
+              </div>
+
+              <div class="field">
+                <label>Prazo restante</label>
+                <small>Quantidade de parcelas a pagar</small>
+                <input type="text" inputmode="numeric" class="input-prazo prazo" placeholder="Ex: 233 meses">
+              </div>
+
+              <div class="field">
+                <label>Reajuste anual</label>
+                <small>Índice de correção</small>
+                <select class="reajuste-select">
+                  <option value="">Selecione o índice</option>
+                  <option value="INCC">INCC</option>
+                  <option value="IPCA">IPCA</option>
+                  <option value="INPC">INPC</option>
+                  <option value="PRE">PRÉ-FIXADO 5%</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <p class="disclaimer-note">*Simulação usa índices médios estimados para reajuste anual (INCC 6%, IPCA/INPC 4,5%, Pré-fixado 5%). Ajuste sua expectativa conforme o índice real de cada administradora.</p>
+
+        <div class="button-row">
+          <div id="error" class="error-msg" style="display:none;"></div>
+          <button type="button" class="btn-ghost" id="btnAddCard">+ Adicionar carta</button>
+          <button type="button" class="btn-ghost" id="btnLimpar">Limpar campos</button>
+          <button type="button" class="btn-primary" id="btnCalcular">
+            <span class="icon">➜</span>
+            Calcular custo efetivo
+          </button>
+        </div>
+      </section>
+
+      <section class="card" aria-label="Resultados da simulação">
+        <h2>Resultado total da operação</h2>
+
+        <div class="results-grid">
+          <div class="result-item">
+            <div class="result-label">Crédito líquido total recebido</div>
+            <div class="result-value" id="creditoLiquido">–</div>
+          </div>
+
+          <div class="result-item">
+            <div class="result-label">Saldo devedor total</div>
+            <div class="result-value" id="saldoDevedor">–</div>
+          </div>
+
+          <div class="result-item">
+            <div class="result-label">Custo total da operação (R$)</div>
+            <div class="result-value" id="custoTotalReais">–</div>
+          </div>
+
+          <div class="result-item">
+            <div class="result-label">Custo total da operação (%)</div>
+            <div class="result-value" id="custoTotalPercent">–</div>
+          </div>
+
+          <div class="result-item result-highlight">
+            <div class="result-label">CET mensal aproximado</div>
+            <div class="result-value" id="cetMensal">–</div>
+          </div>
+
+          <div class="result-item result-highlight">
+            <div class="result-label">CET anual aproximado</div>
+            <div class="result-value" id="cetAnual">–</div>
+          </div>
+        </div>
+
+        <div id="agrupamentoParcelas" class="installment-summary"></div>
+
+        <div class="copy-row">
+          <button type="button" class="btn-ghost" id="btnCopiarResumo">
+            Copiar resumo para WhatsApp
+          </button>
+          <span id="copyFeedback" class="copy-feedback">Resumo copiado! Cole no WhatsApp.</span>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      <span>© <span id="year">2026</span> contemplei – uso educativo, não é recomendação de investimento.</span>
+      <span>Simulador de custo efetivo de cartas contempladas de consórcio.</span>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

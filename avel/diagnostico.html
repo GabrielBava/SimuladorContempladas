@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Ável Planejamento — Diagnóstico Financeiro Inteligente</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Transforme a transcrição da reunião em um diagnóstico financeiro estruturado, executivo e personalizado.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="topbar">
+        <img class="brand-logo" src="assets/avel-logo.svg" alt="Ável Planejamento">
+        <span class="env-tag">protótipo</span>
+      </div>
+
+      <div class="hero-block">
+        <div class="eyebrow">Diagnóstico Financeiro</div>
+        <h1 class="hero">Diagnóstico Financeiro Inteligente</h1>
+        <p class="intro">Transforme a transcrição da reunião em um diagnóstico financeiro estruturado, executivo e personalizado.</p>
+      </div>
+    </header>
+
+    <ol class="stepper" id="stepper">
+      <li class="step-node active" data-step="1"><span class="dot"></span><span class="label">Identificação</span></li>
+      <li class="step-node" data-step="2"><span class="dot"></span><span class="label">Upload</span></li>
+      <li class="step-node" data-step="3"><span class="dot"></span><span class="label">Processamento</span></li>
+      <li class="step-node" data-step="4"><span class="dot"></span><span class="label">Diagnóstico</span></li>
+    </ol>
+
+    <!-- Step 1: Identificação -->
+    <section class="card wizard-step" id="stepIdentificacao" data-step="1">
+      <h2>Identificação</h2>
+      <p class="hint">Todos os campos são opcionais, mas ajudam a personalizar o diagnóstico gerado.</p>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Nome do cliente</label>
+          <input type="text" id="inputNomeCliente" placeholder="Ex: João Silva">
+        </div>
+
+        <div class="field">
+          <label>Nome do planejador</label>
+          <input type="text" id="inputNomePlanejador" placeholder="Ex: Ana Ribeiro">
+        </div>
+
+        <div class="field">
+          <label>Data da reunião</label>
+          <input type="date" id="inputDataReuniao">
+        </div>
+
+        <div class="field">
+          <label>Tipo</label>
+          <select id="inputTipo">
+            <option value="PF">Pessoa Física</option>
+            <option value="PJ">Pessoa Jurídica</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Observações</label>
+        <textarea id="inputObservacoes" rows="3" placeholder="Contexto adicional sobre o cliente ou a reunião"></textarea>
+      </div>
+
+      <div class="button-row">
+        <button type="button" class="btn btn-primary" id="btnStep1Continuar">Continuar →</button>
+      </div>
+    </section>
+
+    <!-- Step 2: Upload -->
+    <section class="card wizard-step" id="stepUpload" data-step="2" hidden>
+      <h2>Anexe a transcrição da reunião</h2>
+      <p class="hint">PDF, DOCX, TXT ou arquivo de transcrição — ou cole o texto diretamente abaixo.</p>
+
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Anexar arquivo de transcrição">
+        <div class="dropzone-icon">↑</div>
+        <div class="dropzone-title">Anexe a transcrição da reunião</div>
+        <div class="dropzone-hint">Arraste e solte ou clique para selecionar</div>
+        <div class="dropzone-file" id="dropzoneFile" hidden></div>
+      </div>
+      <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt,.vtt,.srt" hidden>
+
+      <div class="divider"><span>ou</span></div>
+
+      <div class="field">
+        <label>Cole a transcrição aqui</label>
+        <textarea id="inputTranscricao" rows="8" placeholder="Cole aqui o texto da transcrição da reunião..."></textarea>
+      </div>
+
+      <div id="uploadError" class="error-msg" style="display:none;"></div>
+
+      <div class="button-row">
+        <button type="button" class="btn btn-ghost" id="btnStep2Voltar">← Voltar</button>
+        <button type="button" class="btn btn-primary" id="btnGerarDiagnostico">Gerar diagnóstico →</button>
+      </div>
+    </section>
+
+    <!-- Step 3: Processamento -->
+    <section class="card wizard-step processing-card" id="stepProcessing" data-step="3" hidden>
+      <div class="spinner" aria-hidden="true"></div>
+      <h2>Gerando o diagnóstico...</h2>
+      <p class="hint">Extraindo, estruturando e revisando as informações da reunião.</p>
+      <ol class="pipeline" id="processingFlow">
+        <li class="pnode" data-flow="upload"><span class="dot"></span><span class="label">Upload</span></li>
+        <li class="pnode" data-flow="extracao"><span class="dot"></span><span class="label">Extração</span></li>
+        <li class="pnode" data-flow="ia"><span class="dot"></span><span class="label">IA</span></li>
+        <li class="pnode" data-flow="estruturacao"><span class="dot"></span><span class="label">Estruturação</span></li>
+        <li class="pnode" data-flow="diagnostico"><span class="dot"></span><span class="label">Diagnóstico</span></li>
+        <li class="pnode" data-flow="revisao"><span class="dot"></span><span class="label">Revisão</span></li>
+        <li class="pnode" data-flow="apresentacao"><span class="dot"></span><span class="label">Apresentação</span></li>
+      </ol>
+    </section>
+
+    <!-- Step 4: Resultado -->
+    <section class="wizard-step" id="stepResult" data-step="4" hidden>
+      <div class="card result-header-card">
+        <div class="mode-toggle" role="tablist" aria-label="Modo de exibição">
+          <button type="button" class="mode-btn active" id="btnModoInterno" role="tab" aria-selected="true">Modo Interno — Planejador</button>
+          <button type="button" class="mode-btn" id="btnModoCliente" role="tab" aria-selected="false">Modo Cliente — Private</button>
+        </div>
+
+        <div class="result-title" id="resultTitle">
+          <h2 id="resultTitleName">Diagnóstico Financeiro</h2>
+          <p id="resultTitleSub">Uma visão integrada do momento financeiro, patrimônio e objetivos.</p>
+        </div>
+        <div class="result-meta" id="resultMeta"></div>
+      </div>
+
+      <section class="diag-block callout">
+        <div class="eyebrow">Resumo Executivo</div>
+        <p id="blocoResumoExecutivo"></p>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Perfil do Cliente</h3>
+        <p id="blocoPerfilCliente"></p>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Objetivos</h3>
+        <div class="grid-3" id="blocoObjetivos"></div>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Raio-X Financeiro</h3>
+        <div class="grid-4" id="blocoRaioX"></div>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Diagnóstico</h3>
+        <div class="diag-cols" id="blocoDiagnostico"></div>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Prioridades</h3>
+        <div class="prioridades-grid" id="blocoPrioridades"></div>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Informações Pendentes</h3>
+        <ul class="checklist" id="blocoPendencias"></ul>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Próximos Passos</h3>
+        <ol class="next-steps-timeline" id="blocoProximosPassos"></ol>
+      </section>
+
+      <section class="card diag-block internal-only" id="blocoInterno">
+        <h3><span class="tag accent">Uso interno</span> Notas do Planejador</h3>
+        <div class="diag-cols" id="blocoInternoContent"></div>
+      </section>
+
+      <div class="button-row result-actions">
+        <button type="button" class="btn btn-ghost" id="btnEditar">Editar diagnóstico</button>
+        <button type="button" class="btn btn-ghost" id="btnGerarVersaoCliente">Gerar versão para cliente</button>
+        <button type="button" class="btn btn-primary" id="btnExportarPdf">Exportar PDF →</button>
+      </div>
+    </section>
+
+    <footer>
+      <span>Ável Planejamento — Diagnóstico Financeiro Inteligente</span>
+      <span>Protótipo de interface — dados de exemplo, sem IA real conectada.</span>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

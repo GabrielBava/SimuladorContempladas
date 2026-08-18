@@ -1,6 +1,10 @@
 (function () {
   'use strict';
 
+  // Preencha com a URL do Worker após deployar (veja worker/README.md).
+  // Vazio = modo demonstração, com diagnóstico mockado.
+  var API_ENDPOINT = '';
+
   var state = {
     nomeCliente: '',
     nomePlanejador: '',
@@ -159,6 +163,57 @@
     runProcessingAnimation();
   });
 
+  function readFileAsText(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () { resolve(String(reader.result || '')); };
+      reader.onerror = function () { reject(new Error('Não foi possível ler o arquivo.')); };
+      reader.readAsText(file);
+    });
+  }
+
+  function resolveTranscricaoTexto() {
+    if (state.transcricao) return Promise.resolve(state.transcricao);
+    var file = fileInput.files && fileInput.files[0];
+    if (file && /\.(txt|vtt|srt)$/i.test(file.name)) return readFileAsText(file);
+    return Promise.resolve('');
+  }
+
+  function callDiagnosticoAPI(texto) {
+    return fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        identificacao: {
+          nomeCliente: state.nomeCliente,
+          nomePlanejador: state.nomePlanejador,
+          dataReuniao: state.dataReuniao,
+          tipo: state.tipo,
+          observacoes: state.observacoes
+        },
+        transcricao: texto,
+        documentosPresentes: Object.keys(state.docs).map(function (k) { return state.docs[k]; })
+      })
+    }).then(function (res) {
+      if (!res.ok) {
+        return res.json().catch(function () { return {}; }).then(function (err) {
+          throw new Error(err.error || ('Erro HTTP ' + res.status));
+        });
+      }
+      return res.json();
+    });
+  }
+
+  function showApiWarning(message) {
+    var box = document.getElementById('apiWarning');
+    box.textContent = message;
+    box.style.display = '';
+  }
+
+  function hideApiWarning() {
+    document.getElementById('apiWarning').style.display = 'none';
+  }
+
   function runProcessingAnimation() {
     var flowItems = document.querySelectorAll('#processingFlow .pnode');
     flowItems.forEach(function (li) { li.classList.remove('active', 'done'); });
@@ -175,12 +230,34 @@
       processingTimers.push(t);
     });
 
-    var finalTimer = setTimeout(function () {
+    var minDelay = new Promise(function (resolve) {
+      var t = setTimeout(resolve, flowItems.length * 380 + 450);
+      processingTimers.push(t);
+    });
+
+    var apiWarningMessage = null;
+    var dataPromise;
+
+    if (API_ENDPOINT) {
+      dataPromise = resolveTranscricaoTexto().then(function (texto) {
+        if (!texto) {
+          throw new Error('Não foi possível ler o texto automaticamente (nesta versão, apenas .txt/.vtt/.srt ou texto colado são enviados à IA). Exibindo diagnóstico de demonstração.');
+        }
+        return callDiagnosticoAPI(texto);
+      }).catch(function (err) {
+        apiWarningMessage = (err && err.message) || 'Não foi possível conectar à IA. Exibindo diagnóstico de demonstração.';
+        return buildMockDiagnostico(state);
+      });
+    } else {
+      dataPromise = Promise.resolve(buildMockDiagnostico(state));
+    }
+
+    Promise.all([minDelay, dataPromise]).then(function (results) {
       flowItems.forEach(function (li) { li.classList.remove('active'); li.classList.add('done'); });
-      renderDiagnostico(buildMockDiagnostico(state));
+      renderDiagnostico(results[1]);
+      if (apiWarningMessage) showApiWarning(apiWarningMessage); else hideApiWarning();
       goToStep(4);
-    }, flowItems.length * 380 + 450);
-    processingTimers.push(finalTimer);
+    });
   }
 
   // ---------- Step 4: Resultado ----------

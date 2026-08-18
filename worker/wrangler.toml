@@ -1,0 +1,11 @@
+name = "avel-diagnostico-worker"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+# ANTHROPIC_API_KEY é um secret, não vai aqui.
+# Defina com: npx wrangler secret put ANTHROPIC_API_KEY
+
+[vars]
+# Origem permitida para o fetch do front-end (CORS). Ajuste para o domínio
+# real onde o avel/diagnostico.html é publicado.
+ALLOWED_ORIGIN = "*"

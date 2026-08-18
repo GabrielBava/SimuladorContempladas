@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>contemplei — Diagnóstico Financeiro Inteligente</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Transforme a transcrição da reunião em um diagnóstico financeiro estruturado, executivo e personalizado.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='28' fill='%23225a41'/%3E%3Ccircle cx='52' cy='60' r='30' fill='none' stroke='%23ffffff' stroke-width='18' stroke-dasharray='146.6 41.9' stroke-dashoffset='-20.95' stroke-linecap='round'/%3E%3Ccircle cx='90' cy='84' r='10' fill='%23ffffff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="diagnostico.css">
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="brand">
+        <svg class="logo-mark" viewBox="0 0 120 120" aria-hidden="true">
+          <rect width="120" height="120" rx="28" fill="url(#logoGrad)"/>
+          <circle cx="52" cy="60" r="30" fill="none" stroke="#ffffff" stroke-width="18"
+            stroke-dasharray="146.6 41.9" stroke-dashoffset="-20.95" stroke-linecap="round"/>
+          <circle cx="90" cy="84" r="10" fill="#ffffff"/>
+          <defs>
+            <linearGradient id="logoGrad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#2f8f65"/>
+              <stop offset="1" stop-color="#1d5c40"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="wordmark">contemplei</div>
+      </div>
+
+      <nav class="app-nav">
+        <a href="index.html" class="app-nav-link">Calculadora de Custo</a>
+        <a href="diagnostico.html" class="app-nav-link active">Diagnóstico Financeiro</a>
+      </nav>
+
+      <div class="title-block">
+        <h1>Diagnóstico Financeiro Inteligente</h1>
+        <p>Transforme a transcrição da reunião em um diagnóstico financeiro estruturado, executivo e personalizado.</p>
+      </div>
+    </header>
+
+    <div class="proto-badge">Protótipo — os diagnósticos abaixo são dados de exemplo. Em produção, seriam extraídos automaticamente da transcrição via IA.</div>
+
+    <ol class="wizard-steps" id="wizardSteps">
+      <li class="wizard-step-indicator active" data-step="1"><span class="step-num">1</span> Identificação</li>
+      <li class="wizard-step-indicator" data-step="2"><span class="step-num">2</span> Upload</li>
+      <li class="wizard-step-indicator" data-step="3"><span class="step-num">3</span> Processamento</li>
+      <li class="wizard-step-indicator" data-step="4"><span class="step-num">4</span> Diagnóstico</li>
+    </ol>
+
+    <!-- Step 1: Identificação -->
+    <section class="card wizard-step" id="stepIdentificacao" data-step="1">
+      <h2>Identificação</h2>
+      <p class="disclaimer-note">Todos os campos são opcionais, mas ajudam a personalizar o diagnóstico gerado.</p>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Nome do cliente</label>
+          <input type="text" id="inputNomeCliente" placeholder="Ex: João Silva">
+        </div>
+
+        <div class="field">
+          <label>Nome do planejador</label>
+          <input type="text" id="inputNomePlanejador" placeholder="Ex: Ana Ribeiro">
+        </div>
+
+        <div class="field">
+          <label>Data da reunião</label>
+          <input type="date" id="inputDataReuniao">
+        </div>
+
+        <div class="field">
+          <label>Tipo</label>
+          <select id="inputTipo">
+            <option value="PF">Pessoa Física</option>
+            <option value="PJ">Pessoa Jurídica</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Observações</label>
+        <textarea id="inputObservacoes" rows="3" placeholder="Contexto adicional sobre o cliente ou a reunião"></textarea>
+      </div>
+
+      <div class="button-row">
+        <button type="button" class="btn-primary" id="btnStep1Continuar">
+          Continuar
+          <span class="icon">➜</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Step 2: Upload -->
+    <section class="card wizard-step" id="stepUpload" data-step="2" hidden>
+      <h2>Anexe a transcrição da reunião</h2>
+
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Anexar arquivo de transcrição">
+        <div class="dropzone-icon">⬆</div>
+        <div class="dropzone-title">Anexe a transcrição da reunião</div>
+        <div class="dropzone-hint">PDF, DOCX, TXT ou arquivo de transcrição. Arraste e solte ou clique para selecionar.</div>
+        <div class="dropzone-file" id="dropzoneFile" hidden></div>
+      </div>
+      <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt,.vtt,.srt" hidden>
+
+      <div class="divider"><span>ou</span></div>
+
+      <div class="field">
+        <label>Cole a transcrição aqui</label>
+        <textarea id="inputTranscricao" rows="8" placeholder="Cole aqui o texto da transcrição da reunião..."></textarea>
+      </div>
+
+      <div id="uploadError" class="error-msg" style="display:none;"></div>
+
+      <div class="button-row">
+        <button type="button" class="btn-ghost" id="btnStep2Voltar">← Voltar</button>
+        <button type="button" class="btn-primary" id="btnGerarDiagnostico">
+          Gerar diagnóstico
+          <span class="icon">➜</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Step 3: Processamento -->
+    <section class="card wizard-step processing-card" id="stepProcessing" data-step="3" hidden>
+      <div class="spinner" aria-hidden="true"></div>
+      <h2>Gerando o diagnóstico...</h2>
+      <ul class="processing-flow" id="processingFlow">
+        <li data-flow="upload">Upload</li>
+        <li data-flow="extracao">Extração do texto</li>
+        <li data-flow="ia">IA</li>
+        <li data-flow="estruturacao">Estruturação</li>
+        <li data-flow="diagnostico">Diagnóstico</li>
+        <li data-flow="revisao">Revisão</li>
+        <li data-flow="apresentacao">Apresentação</li>
+      </ul>
+    </section>
+
+    <!-- Step 4: Resultado -->
+    <section class="wizard-step" id="stepResult" data-step="4" hidden>
+      <div class="card result-header-card">
+        <div class="mode-toggle" role="tablist" aria-label="Modo de exibição">
+          <button type="button" class="mode-btn active" id="btnModoInterno" role="tab" aria-selected="true">Modo Interno — Planejador</button>
+          <button type="button" class="mode-btn" id="btnModoCliente" role="tab" aria-selected="false">Modo Cliente — Private</button>
+        </div>
+
+        <div class="result-title" id="resultTitle">
+          <h2 id="resultTitleName">Diagnóstico Financeiro</h2>
+          <p id="resultTitleSub">Uma visão integrada do momento financeiro, patrimônio e objetivos.</p>
+        </div>
+        <div class="result-meta" id="resultMeta"></div>
+      </div>
+
+      <section class="card diag-block">
+        <h3>Resumo Executivo</h3>
+        <p id="blocoResumoExecutivo"></p>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Perfil do Cliente</h3>
+        <p id="blocoPerfilCliente"></p>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Objetivos</h3>
+        <div class="objetivos-grid" id="blocoObjetivos"></div>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Raio-X Financeiro</h3>
+        <div class="results-grid" id="blocoRaioX"></div>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Diagnóstico</h3>
+        <div class="diag-cols" id="blocoDiagnostico"></div>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Prioridades</h3>
+        <div class="prioridades-grid" id="blocoPrioridades"></div>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Informações Pendentes</h3>
+        <ul class="checklist" id="blocoPendencias"></ul>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Próximos Passos</h3>
+        <ol class="steps-list" id="blocoProximosPassos"></ol>
+      </section>
+
+      <section class="card diag-block internal-only" id="blocoInterno">
+        <h3>Notas Internas — Planejador</h3>
+        <div class="diag-cols" id="blocoInternoContent"></div>
+      </section>
+
+      <div class="button-row result-actions">
+        <button type="button" class="btn-ghost" id="btnEditar">Editar diagnóstico</button>
+        <button type="button" class="btn-ghost" id="btnGerarVersaoCliente">Gerar versão para cliente</button>
+        <button type="button" class="btn-primary" id="btnExportarPdf">
+          Exportar PDF
+          <span class="icon">➜</span>
+        </button>
+      </div>
+    </section>
+
+    <footer>
+      <span>© <span id="year">2026</span> contemplei – uso educativo, não é recomendação de investimento.</span>
+      <span>Diagnóstico Financeiro Inteligente — protótipo de interface.</span>
+    </footer>
+  </div>
+
+  <script src="diagnostico.js"></script>
+</body>
+</html>

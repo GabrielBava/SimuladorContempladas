@@ -74,6 +74,36 @@ header {
   color: var(--green);
 }
 
+.app-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.app-nav-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--field-border);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+
+.app-nav-link:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.app-nav-link.active {
+  background: var(--green-soft);
+  border-color: var(--green-soft-border);
+  color: var(--green);
+}
+
 .title-block h1 {
   margin: 0 0 8px;
   font-size: clamp(24px, 3vw, 32px);

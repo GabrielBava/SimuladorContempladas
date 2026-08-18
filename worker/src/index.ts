@@ -84,6 +84,25 @@ const DiagnosticoSchema = z.object({
     perguntasR2: z.array(z.string()),
     riscosOportunidadesComerciais: z.array(z.string()),
   }),
+  // Camada analítica inspirada no processo que a Ável já usa no Gemini
+  // (framework de Grupo/caixinhas inferido — ver comentário no SYSTEM_PROMPT).
+  contextoAnalitico: z.object({
+    grupo: z.string().describe(
+      'Classificação comportamental do cliente no formato "Grupo X — Nome do arquétipo" (ex.: "Grupo C — Investidor Desconexo/Poupador").'
+    ),
+    classificacaoRacional: z.string().describe('Por que o cliente se encaixa nesse grupo, com base em evidências da transcrição.'),
+    inferencias: z.array(z.string()).describe(
+      'Leituras comportamentais que explicam o "porquê" por trás das escolhas do cliente (ex.: prioriza acumulação por desconhecer o risco de liquidez envolvido) — sempre como hipótese fundamentada, nunca como fato assumido.'
+    ),
+    conclusoes: z.string().describe('Síntese estrutural: o que o cliente precisa em termos de organização financeira (ex.: reorganização por caixinhas de objetivos, redirecionamento de remuneração variável).'),
+    caixinhasObjetivos: z.array(z.object({
+      prioridade: z.enum(['P1', 'P2', 'P3', 'P4']),
+      nome: z.string().describe('Nome curto da caixinha (ex.: Liquidez Imediata, Objetivos de Curto/Médio Prazo, Construção Patrimonial, Legado/Sucessão).'),
+      objetivo: z.string().describe('O que essa caixinha deve conter/resolver para este cliente especificamente.'),
+    })).length(4).describe('As 4 caixinhas de objetivos (P1 = mais urgente/líquida a P4 = mais longo prazo), adaptadas ao caso do cliente.'),
+    dadosFaltantesAnalise: z.array(z.string()).describe('Lacunas analíticas que limitam a precisão do diagnóstico (diferente de documentos pendentes — são leituras que a IA não conseguiu fechar com segurança).'),
+    pontosValidacao: z.array(z.string()).describe('Decisões ou inferências específicas que precisam de confirmação explícita do planejador ou do cliente antes de virarem recomendação.'),
+  }),
 });
 
 const SYSTEM_PROMPT = `Você atua como Planejador Financeiro sênior da Ável Planejamento, responsável por transformar a transcrição de uma reunião (R1) e os dados coletados do cliente em um diagnóstico financeiro estruturado.
@@ -109,6 +128,25 @@ PRIORIDADES DE ATUAÇÃO (uso interno, 3 a 5 temas): severidade crítica/alta/mo
 DORES, PREOCUPAÇÕES E GATILHOS (uso interno): baseie-se no que o próprio cliente verbalizou ou demonstrou. Recupere, quando possível, palavras ou expressões usadas por ele, sem distorcer o contexto. Não invente dores nem use pressão artificial. Argumentos para o close devem conectar diretamente às dores/preocupações/objetivos identificados, nunca genéricos.
 
 NOTAS INTERNAS (gaps, perguntas para R2, riscos/oportunidades comerciais): técnico e direto, para uso exclusivo do planejador.
+
+CONTEXTO ANALÍTICO (uso interno — camada de raciocínio, inspirada no processo que a Ável já usa em outra ferramenta de IA):
+- GRUPO: classifique o cliente no formato "Grupo X — Nome do arquétipo", cruzando duas dimensões — apetite a risco (alto/baixo) e alinhamento/organização financeira (alto/baixo). Como referência de nomenclatura (ajuste o nome do arquétipo ao caso, mas mantenha a lógica das duas dimensões):
+  · Grupo A — Investidor Estruturado: risco alto + boa organização (equilibra risco e liquidez).
+  · Grupo B — Guardião Conservador: risco baixo + boa organização (prioriza segurança, já estruturado).
+  · Grupo C — Investidor Desconexo/Poupador: risco alto + baixa organização (acumula em ativos de risco sem estrutura de liquidez/proteção — ex.: alta exposição a renda variável/cripto com reserva de emergência insuficiente para o custo de vida).
+  · Grupo D — Iniciante/Desorganizado: risco baixo ou indefinido + baixa organização (ainda não estruturou poupança nem investimentos).
+  Use isso como diretriz de raciocínio, não como categoria rígida — se a transcrição sugerir um perfil que não se encaixa bem, descreva o arquétipo mais fiel à evidência.
+- INFERÊNCIAS: hipóteses comportamentais sobre o "porquê" das escolhas do cliente (ex.: prioriza acumulação por desconhecer o risco de liquidez do próprio padrão de gasto). Sempre marcadas como leitura da IA, nunca como fato — e sempre ancoradas em algo dito ou demonstrado na transcrição.
+- CONCLUSÕES: síntese de que tipo de organização estrutural o cliente precisa (ex.: reorganizar a carteira por caixinhas de objetivos, redirecionar bônus/remuneração variável).
+- CAIXINHAS DE OBJETIVOS (P1 a P4): estrutura de 4 baldes por prioridade/horizonte, adaptada ao cliente. Referência de sentido geral (adapte nomes e conteúdo ao caso, mantendo a ordem de prioridade):
+  · P1 — Liquidez Imediata (reserva de emergência / segurança de curtíssimo prazo)
+  · P2 — Objetivos de Curto/Médio Prazo (metas específicas em 1-3 anos)
+  · P3 — Construção Patrimonial de Longo Prazo (aposentadoria, investimentos estruturados)
+  · P4 — Legado/Sucessão (planejamento sucessório e patrimonial de muito longo prazo)
+- DADOS FALTANTES (ANÁLISE): lacunas que limitam a precisão do diagnóstico — diferente da lista de documentos pendentes, aqui é sobre o que a leitura analítica não conseguiu fechar com segurança.
+- PONTOS EXIGINDO VALIDAÇÃO: inferências ou decisões específicas que precisam de confirmação explícita do planejador/cliente antes de virarem recomendação (ex.: nível de aceitação do cliente para pausar temporariamente aportes em cripto até completar a reserva).
+
+Nota: o framework de Grupos e caixinhas acima é uma referência de raciocínio fornecida pela Ável a partir de um único exemplo — aplique com bom senso e sempre subordinado à evidência real da transcrição, nunca forçando o caso a se encaixar na categoria.
 
 Responda exclusivamente em português do Brasil, com tom executivo, consultivo e profissional em todos os campos.`;
 

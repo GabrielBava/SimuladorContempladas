@@ -430,6 +430,24 @@
         gaps: ['Perfil de risco não coletado formalmente', 'Sucessão/testamento não mencionado', 'Proteção (seguros) não abordada na reunião'],
         perguntasR2: ['Qual a tolerância real a risco em cenários de queda?', 'Há intenção de aquisição de novos imóveis nos próximos 24 meses?', 'Existe patrimônio ou dívida não mencionada na reunião?'],
         riscosOportunidadesComerciais: ['Oportunidade de consolidar todos os investimentos sob assessoria única', 'Risco de perda de mandato caso reserva de emergência não seja endereçada rapidamente', 'Espaço para oferta de seguro de vida/patrimonial']
+      },
+
+      contextoAnalitico: {
+        grupo: 'Grupo C — Investidor Desconexo/Poupador',
+        classificacaoRacional: 'Alta capacidade de geração e concentração patrimonial relevante (risco/acumulação), combinadas com ausência de reserva líquida e nenhuma estrutura formal de proteção — desalinhamento entre apetite de risco assumido e segurança de curto prazo.',
+        inferencias: [
+          'O cliente parece priorizar acumulação patrimonial em detrimento da segurança de curto prazo por não perceber, na prática, o risco de liquidez embutido no seu padrão de despesas atual.',
+          'A ausência de reserva formal sugere que a poupança mensal vem sendo tratada como um fim em si (guardar/investir), sem uma lógica explícita de "para quê" cada parte do dinheiro serve.'
+        ],
+        conclusoes: 'O cliente precisa de uma reorganização da carteira por caixinhas de objetivos (P1 a P4), com redirecionamento inicial de parte da capacidade de poupança e de eventuais valores extraordinários (bônus, 13º) para fechar a reserva antes de acelerar aportes em ativos de menor liquidez.',
+        caixinhasObjetivos: [
+          { prioridade: 'P1', nome: 'Liquidez Imediata', objetivo: 'Fechar a reserva de emergência (hoje inexistente) até atingir ao menos 6 meses de despesas em ativo líquido.' },
+          { prioridade: 'P2', nome: 'Objetivos de Curto/Médio Prazo', objetivo: 'Reorganizar/renegociar a dívida em aberto e planejar a próxima aquisição relevante (imóvel ou veículo).' },
+          { prioridade: 'P3', nome: 'Construção Patrimonial', objetivo: 'Diversificar os investimentos atuais, hoje concentrados, com aportes recorrentes estruturados.' },
+          { prioridade: 'P4', nome: 'Legado / Sucessão', objetivo: 'Iniciar planejamento sucessório básico, ainda não abordado pelo cliente.' }
+        ],
+        dadosFaltantesAnalise: ['Perfil de risco formal (questionário de suitability)', 'Detalhamento de prazos e liquidez dos investimentos atuais', 'Intenção declarada de horizonte para a independência financeira'],
+        pontosValidacao: ['Confirmar com o cliente o nível de aceitação para pausar temporariamente novos aportes de risco até a reserva estar completa', 'Validar se o valor de dívida mencionado é o saldo total ou apenas a parcela mensal']
       }
     };
   }
@@ -659,6 +677,28 @@
     internoContent.appendChild(diagCol('Gaps de informação', d.interno.gaps, 'x-list'));
     internoContent.appendChild(diagCol('Perguntas para a R2', d.interno.perguntasR2, 'bullet-list'));
     internoContent.appendChild(diagCol('Riscos / oportunidades comerciais', d.interno.riscosOportunidadesComerciais, 'check-list'));
+
+    var ctx = d.contextoAnalitico;
+    document.getElementById('blocoGrupoBadge').textContent = ctx.grupo;
+    document.getElementById('blocoGrupoRacional').textContent = ctx.classificacaoRacional;
+    fillListEl(document.getElementById('blocoInferencias'), ctx.inferencias);
+    document.getElementById('blocoConclusoes').textContent = ctx.conclusoes;
+
+    var caixinhasEl = document.getElementById('blocoCaixinhas');
+    caixinhasEl.innerHTML = '';
+    ctx.caixinhasObjetivos.forEach(function (c) {
+      var card = el('div', 'caixinha-card');
+      card.appendChild(el('div', 'p-label', c.prioridade));
+      card.appendChild(el('div', 'p-nome', c.nome));
+      card.appendChild(el('div', 'p-objetivo', c.objetivo));
+      caixinhasEl.appendChild(card);
+    });
+
+    fillListEl(document.getElementById('blocoDadosFaltantesAnalise'), ctx.dadosFaltantesAnalise);
+
+    var validacaoEl = document.getElementById('blocoPontosValidacao');
+    validacaoEl.innerHTML = '';
+    ctx.pontosValidacao.forEach(function (p) { var li = document.createElement('li'); li.textContent = p; validacaoEl.appendChild(li); });
 
     renderHeader();
   }

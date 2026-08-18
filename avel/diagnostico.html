@@ -71,27 +71,109 @@
 
     <!-- Step 2: Upload -->
     <section class="card wizard-step" id="stepUpload" data-step="2" hidden>
-      <h2>Anexe a transcrição da reunião</h2>
-      <p class="hint">PDF, DOCX, TXT ou arquivo de transcrição — ou cole o texto diretamente abaixo.</p>
+      <h2>Documentos da Reunião</h2>
+      <p class="hint">Anexe os materiais coletados na R1 para a elaboração do diagnóstico.</p>
 
-      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Anexar arquivo de transcrição">
+      <div class="doc-section-title">
+        <span class="tag accent">Essenciais</span>
+        <span class="doc-section-note">Base para o diagnóstico de todo lead</span>
+      </div>
+
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Anexar transcrição da reunião">
         <div class="dropzone-icon">↑</div>
-        <div class="dropzone-title">Anexe a transcrição da reunião</div>
-        <div class="dropzone-hint">Arraste e solte ou clique para selecionar</div>
+        <div class="dropzone-title">Transcrição da Reunião</div>
+        <div class="dropzone-hint">Transcrição por fala gerada pelo Google Meet — arraste, clique ou cole o texto abaixo</div>
         <div class="dropzone-file" id="dropzoneFile" hidden></div>
       </div>
       <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt,.vtt,.srt" hidden>
 
-      <div class="divider"><span>ou</span></div>
+      <div class="divider"><span>ou cole o texto</span></div>
 
       <div class="field">
         <label>Cole a transcrição aqui</label>
-        <textarea id="inputTranscricao" rows="8" placeholder="Cole aqui o texto da transcrição da reunião..."></textarea>
+        <textarea id="inputTranscricao" rows="6" placeholder="Cole aqui o texto da transcrição da reunião..."></textarea>
       </div>
 
-      <div id="uploadError" class="error-msg" style="display:none;"></div>
+      <div class="doc-list" style="margin-top: 4px;">
+        <div class="doc-row" data-doc="coleta">
+          <div class="doc-info">
+            <span class="doc-title">Coleta de Dados (Intra)</span>
+            <span class="doc-desc">Dados levantados pelo planejador ao longo da R1</span>
+          </div>
+          <div class="doc-actions">
+            <span class="doc-file-badge" hidden></span>
+            <button type="button" class="doc-attach-btn">Anexar arquivo</button>
+            <input type="file" hidden>
+          </div>
+        </div>
+      </div>
 
-      <div class="button-row">
+      <div class="doc-section-title">
+        <span class="tag">Extras</span>
+        <span class="doc-section-note">Aprofundam a análise, quando disponíveis</span>
+      </div>
+
+      <div class="doc-list">
+        <div class="doc-row" data-doc="ir">
+          <div class="doc-info">
+            <span class="doc-title">Declaração de Imposto de Renda</span>
+            <span class="doc-desc">Recibo de entrega</span>
+          </div>
+          <div class="doc-actions">
+            <span class="doc-file-badge" hidden></span>
+            <button type="button" class="doc-attach-btn">Anexar arquivo</button>
+            <input type="file" hidden>
+          </div>
+        </div>
+
+        <div class="doc-row" data-doc="financiamento">
+          <div class="doc-info">
+            <span class="doc-title">Extrato de Financiamento Bancário</span>
+            <span class="doc-desc">Situação atual do contrato</span>
+          </div>
+          <div class="doc-actions">
+            <span class="doc-file-badge" hidden></span>
+            <button type="button" class="doc-attach-btn">Anexar arquivo</button>
+            <input type="file" hidden>
+          </div>
+        </div>
+
+        <div class="doc-row" data-doc="extrato">
+          <div class="doc-info">
+            <span class="doc-title">Extrato Bancário — 3 meses</span>
+            <span class="doc-desc">Movimentação dos últimos 3 meses</span>
+          </div>
+          <div class="doc-actions">
+            <span class="doc-typical">
+              Período típico?
+              <select id="selectExtratoTipico">
+                <option value="">—</option>
+                <option value="sim">Sim</option>
+                <option value="nao">Não</option>
+              </select>
+            </span>
+            <span class="doc-file-badge" hidden></span>
+            <button type="button" class="doc-attach-btn">Anexar arquivo</button>
+            <input type="file" hidden>
+          </div>
+        </div>
+
+        <div class="doc-row" data-doc="cartao">
+          <div class="doc-info">
+            <span class="doc-title">Fatura Cartão de Crédito — 3 meses</span>
+            <span class="doc-desc">Faturas dos últimos 3 meses</span>
+          </div>
+          <div class="doc-actions">
+            <span class="doc-file-badge" hidden></span>
+            <button type="button" class="doc-attach-btn">Anexar arquivo</button>
+            <input type="file" hidden>
+          </div>
+        </div>
+      </div>
+
+      <div id="uploadError" class="error-msg" style="display:none; margin-top: 20px;"></div>
+
+      <div class="button-row" style="margin-top: 22px;">
         <button type="button" class="btn btn-ghost" id="btnStep2Voltar">← Voltar</button>
         <button type="button" class="btn btn-primary" id="btnGerarDiagnostico">Gerar diagnóstico →</button>
       </div>
@@ -139,23 +221,70 @@
       </section>
 
       <section class="card diag-block">
+        <h3>Diagnóstico Inicial</h3>
+        <p class="hint">Os 3 pontos financeiros mais relevantes identificados na transcrição.</p>
+        <div class="point-card-list" id="blocoDiagnosticoInicial"></div>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Áreas para Otimização</h3>
+        <p class="hint">O que o cliente já faz bem e pode ser potencializado.</p>
+        <div class="point-card-list" id="blocoAreasOtimizacao"></div>
+      </section>
+
+      <section class="card diag-block">
+        <h3>Oportunidades para Potenciais</h3>
+        <p class="hint">Onde o planejamento financeiro pode atuar em conjunto com o cliente.</p>
+        <div class="point-card-list" id="blocoOportunidades"></div>
+      </section>
+
+      <section class="card diag-block">
         <h3>Objetivos</h3>
         <div class="grid-3" id="blocoObjetivos"></div>
       </section>
 
       <section class="card diag-block">
         <h3>Raio-X Financeiro</h3>
-        <div class="grid-4" id="blocoRaioX"></div>
-      </section>
 
-      <section class="card diag-block">
-        <h3>Diagnóstico</h3>
-        <div class="diag-cols" id="blocoDiagnostico"></div>
-      </section>
+        <div class="raiox-sub">
+          <h4>Resumo Financeiro</h4>
+          <div class="grid-4" id="blocoRaioXResumo"></div>
+        </div>
 
-      <section class="card diag-block">
-        <h3>Prioridades</h3>
-        <div class="prioridades-grid" id="blocoPrioridades"></div>
+        <div class="raiox-sub chart-block">
+          <h4>Fluxo Financeiro</h4>
+          <div class="flow-chart" id="blocoRaioXFluxo"></div>
+        </div>
+
+        <div class="raiox-sub chart-block">
+          <h4>Composição Patrimonial</h4>
+          <div class="donut-chart" id="blocoRaioXComposicao"></div>
+        </div>
+
+        <div class="raiox-sub">
+          <h4>Liquidez e Endividamento</h4>
+          <p id="blocoRaioXLiquidez"></p>
+        </div>
+
+        <div class="raiox-sub">
+          <h4>Investimentos</h4>
+          <p id="blocoRaioXInvestimentos"></p>
+        </div>
+
+        <div class="raiox-sub">
+          <h4>Pontos Positivos</h4>
+          <ul class="check-list" id="blocoRaioXPositivos"></ul>
+        </div>
+
+        <div class="raiox-sub">
+          <h4>Pontos de Atenção</h4>
+          <ul class="x-list" id="blocoRaioXAtencao"></ul>
+        </div>
+
+        <div class="raiox-sub">
+          <h4>Conclusão</h4>
+          <p id="blocoRaioXConclusao"></p>
+        </div>
       </section>
 
       <section class="card diag-block">
@@ -168,7 +297,34 @@
         <ol class="next-steps-timeline" id="blocoProximosPassos"></ol>
       </section>
 
-      <section class="card diag-block internal-only" id="blocoInterno">
+      <section class="card diag-block internal-only interno-block">
+        <h3><span class="tag accent">Uso interno</span> Prioridades de Atuação</h3>
+        <div class="priority-card-list" id="blocoPrioridadesAtuacao"></div>
+        <div class="strategic-read">
+          <div class="k">Leitura Estratégica Interna</div>
+          <p id="blocoLeituraEstrategica"></p>
+        </div>
+      </section>
+
+      <section class="card diag-block internal-only interno-block">
+        <h3><span class="tag accent">Uso interno</span> Dores, Preocupações e Gatilhos</h3>
+        <div class="pains-grid">
+          <div class="diag-col"><h4>Principais Dores</h4><ul class="x-list" id="blocoDores"></ul></div>
+          <div class="diag-col"><h4>Preocupações e Medos</h4><ul class="x-list" id="blocoPreocupacoes"></ul></div>
+          <div class="diag-col"><h4>Desejos e Objetivos</h4><ul class="check-list" id="blocoDesejos"></ul></div>
+        </div>
+        <div class="pains-grid">
+          <div class="diag-col"><h4>Gatilhos de Decisão</h4><ul class="bullet-list" id="blocoGatilhos"></ul></div>
+          <div class="diag-col"><h4>Possíveis Objeções</h4><ul class="bullet-list" id="blocoObjecoes"></ul></div>
+          <div class="diag-col"><h4>Argumentos para o Close</h4><ul class="check-list" id="blocoArgumentos"></ul></div>
+        </div>
+        <div class="close-block">
+          <h4>Melhor Abordagem</h4>
+          <p id="blocoAbordagem"></p>
+        </div>
+      </section>
+
+      <section class="card diag-block internal-only interno-block" id="blocoInterno">
         <h3><span class="tag accent">Uso interno</span> Notas do Planejador</h3>
         <div class="diag-cols" id="blocoInternoContent"></div>
       </section>
@@ -186,6 +342,8 @@
     </footer>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

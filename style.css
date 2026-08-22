@@ -237,6 +237,59 @@ header {
   font-weight: 500;
 }
 
+.field-url {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--card-border);
+}
+
+.field-url .input-url {
+  font-weight: 500;
+}
+
+.field-url .input-url:not(:placeholder-shown):valid {
+  border-color: var(--field-border-focus);
+}
+
+.scrape-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.scrape-status[hidden] {
+  display: none;
+}
+
+.scrape-status.is-loading {
+  color: var(--text-muted);
+}
+
+.scrape-status.is-success {
+  color: var(--green);
+}
+
+.scrape-status.is-error {
+  color: var(--danger);
+}
+
+.scrape-status .spinner {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--field-border);
+  border-top-color: var(--green);
+  animation: scrape-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes scrape-spin {
+  to { transform: rotate(360deg); }
+}
+
 .field input:focus,
 .field select:focus {
   border-color: var(--field-border-focus);

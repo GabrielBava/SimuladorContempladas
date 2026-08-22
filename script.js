@@ -14,6 +14,14 @@
     SERVICO: 'Serviço'
   };
 
+  // TODO: apontar para o Cloudflare Worker (ou outro serviço) responsável por
+  // buscar a página da carta no servidor e devolver os campos extraídos.
+  // Contrato esperado da resposta: { credito, entrada, parcela, prazoMeses }
+  // (credito/entrada/parcela em reais, prazoMeses como inteiro).
+  // Enquanto não estiver configurado, a leitura automática mostra um aviso
+  // claro em vez de fingir que funcionou.
+  var SCRAPE_ENDPOINT = '';
+
   var cardsContainer = document.getElementById('cardsContainer');
   var cardTemplate = document.getElementById('cardTemplate');
   var errorBox = document.getElementById('error');
@@ -79,6 +87,105 @@
     });
   }
 
+  function debounce(fn, wait) {
+    var timer = null;
+    return function () {
+      var args = arguments;
+      clearTimeout(timer);
+      timer = setTimeout(function () { fn.apply(null, args); }, wait);
+    };
+  }
+
+  function isValidUrl(str) {
+    try {
+      var u = new URL(str);
+      return u.protocol === 'http:' || u.protocol === 'https:';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function setScrapeStatus(row, state, message) {
+    var statusEl = row.querySelector('.scrape-status');
+    if (!message) {
+      statusEl.hidden = true;
+      statusEl.innerHTML = '';
+      statusEl.className = 'scrape-status';
+      return;
+    }
+    statusEl.hidden = false;
+    statusEl.className = 'scrape-status is-' + state;
+    statusEl.innerHTML = (state === 'loading' ? '<span class="spinner"></span>' : '') +
+      '<span>' + message + '</span>';
+  }
+
+  function fillCardFromScrapedData(row, data) {
+    if (typeof data.credito === 'number') {
+      row.querySelector('.credito').value = formatCurrencyFromCents(Math.round(data.credito * 100));
+    }
+    if (typeof data.entrada === 'number') {
+      row.querySelector('.entrada').value = formatCurrencyFromCents(Math.round(data.entrada * 100));
+    }
+    if (typeof data.parcela === 'number') {
+      row.querySelector('.parcela').value = formatCurrencyFromCents(Math.round(data.parcela * 100));
+    }
+    if (typeof data.prazoMeses === 'number') {
+      row.querySelector('.prazo').value = data.prazoMeses + ' meses';
+    }
+  }
+
+  function maybeFillGlobalOptions(data) {
+    if (!segmentoSelect.value && data.segmento && SEGMENTO_LABELS[data.segmento]) {
+      segmentoSelect.value = data.segmento;
+    }
+    if (!administradoraInput.value.trim() && data.administradora) {
+      administradoraInput.value = data.administradora;
+    }
+  }
+
+  function scrapeCartaFromUrl(row, url) {
+    if (!SCRAPE_ENDPOINT) {
+      setScrapeStatus(row, 'error', 'Leitura automática ainda não configurada para este link. Preencha os campos manualmente por enquanto.');
+      return;
+    }
+
+    setScrapeStatus(row, 'loading', 'Lendo dados da carta...');
+
+    fetch(SCRAPE_ENDPOINT + '?url=' + encodeURIComponent(url))
+      .then(function (res) {
+        return res.json().then(function (data) {
+          if (!res.ok) throw new Error(data && data.error ? data.error : ('HTTP ' + res.status));
+          return data;
+        });
+      })
+      .then(function (data) {
+        fillCardFromScrapedData(row, data);
+        maybeFillGlobalOptions(data);
+        setScrapeStatus(row, 'success', 'Dados preenchidos automaticamente. Confira antes de calcular.');
+      })
+      .catch(function (err) {
+        setScrapeStatus(row, 'error', (err && err.message) || 'Não foi possível ler esse link automaticamente. Preencha os campos manualmente.');
+      });
+  }
+
+  function attachUrlAutoRead(row) {
+    var urlInput = row.querySelector('.carta-url');
+    var trigger = debounce(function () {
+      var value = urlInput.value.trim();
+      if (!value) {
+        setScrapeStatus(row, null, null);
+        return;
+      }
+      if (!isValidUrl(value)) {
+        setScrapeStatus(row, 'error', 'Link inválido.');
+        return;
+      }
+      scrapeCartaFromUrl(row, value);
+    }, 500);
+
+    urlInput.addEventListener('input', trigger);
+  }
+
   function renumberCards() {
     var rows = cardsContainer.querySelectorAll('.card-row');
     rows.forEach(function (row, i) {
@@ -93,11 +200,11 @@
     var fragment = cardTemplate.content.cloneNode(true);
     var row = fragment.querySelector('.card-row');
 
-    row.querySelector('.credito').addEventListener('input', function () {});
     attachCurrencyMask(row.querySelector('.credito'));
     attachCurrencyMask(row.querySelector('.entrada'));
     attachCurrencyMask(row.querySelector('.parcela'));
     attachPrazoMask(row.querySelector('.prazo'));
+    attachUrlAutoRead(row);
 
     row.querySelector('.btn-remove-card').addEventListener('click', function () {
       row.remove();

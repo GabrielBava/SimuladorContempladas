@@ -130,7 +130,7 @@
       row.querySelector('.parcela').value = formatCurrencyFromCents(Math.round(data.parcela * 100));
     }
     if (typeof data.prazoMeses === 'number') {
-      row.querySelector('.prazo').value = data.prazoMeses + ' meses';
+      row.querySelector('.prazo').value = String(data.prazoMeses);
     }
   }
 

@@ -14,13 +14,9 @@
     SERVICO: 'Serviço'
   };
 
-  // TODO: apontar para o Cloudflare Worker (ou outro serviço) responsável por
-  // buscar a página da carta no servidor e devolver os campos extraídos.
-  // Contrato esperado da resposta: { credito, entrada, parcela, prazoMeses }
-  // (credito/entrada/parcela em reais, prazoMeses como inteiro).
-  // Enquanto não estiver configurado, a leitura automática mostra um aviso
-  // claro em vez de fingir que funcionou.
-  var SCRAPE_ENDPOINT = '';
+  // Cloudflare Worker (cloudflare-worker/scrape-carta.js) que busca a página
+  // da carta no servidor e devolve os campos extraídos do JSON-LD da página.
+  var SCRAPE_ENDPOINT = 'https://scrape-carta.gabriel-bavaresco.workers.dev';
 
   var cardsContainer = document.getElementById('cardsContainer');
   var cardTemplate = document.getElementById('cardTemplate');

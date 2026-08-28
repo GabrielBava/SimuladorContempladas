@@ -88,6 +88,45 @@ header {
   font-size: 15px;
 }
 
+/* ---------- Mode tabs ---------- */
+
+.mode-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  margin-bottom: 24px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  width: fit-content;
+}
+
+.mode-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 22px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+
+.mode-tab:hover {
+  color: var(--text);
+}
+
+.mode-tab.active {
+  background: var(--green);
+  color: #04150c;
+}
+
+.mode-panel[hidden] {
+  display: none;
+}
+
 /* ---------- Layout ---------- */
 
 .layout {

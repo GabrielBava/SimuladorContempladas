@@ -38,12 +38,35 @@
   var indiceSelect = document.getElementById('indiceSelect');
   var administradoraInput = document.getElementById('administradoraInput');
 
+  var tabVenda = document.getElementById('tabVenda');
+  var tabCompra = document.getElementById('tabCompra');
+  var modeVenda = document.getElementById('modeVenda');
+  var modeCompra = document.getElementById('modeCompra');
+
+  var cardsContainerCompra = document.getElementById('cardsContainerCompra');
+  var cardTemplateCompra = document.getElementById('cardTemplateCompra');
+  var errorBoxCompra = document.getElementById('errorCompra');
+  var btnAddCardCompra = document.getElementById('btnAddCardCompra');
+  var btnLimparCompra = document.getElementById('btnLimparCompra');
+  var btnCalcularCompra = document.getElementById('btnCalcularCompra');
+  var btnCopiarResumoCompra = document.getElementById('btnCopiarResumoCompra');
+  var copyFeedbackCompra = document.getElementById('copyFeedbackCompra');
+  var btnCopiarAgrupamentoCompra = document.getElementById('btnCopiarAgrupamentoCompra');
+  var copyAgrupamentoFeedbackCompra = document.getElementById('copyAgrupamentoFeedbackCompra');
+  var agrupamentoSectionCompra = document.getElementById('agrupamentoSectionCompra');
+  var agrupamentoParcelasCompra = document.getElementById('agrupamentoParcelasCompra');
+  var segmentoSelectCompra = document.getElementById('segmentoSelectCompra');
+  var indiceSelectCompra = document.getElementById('indiceSelectCompra');
+  var administradoraInputCompra = document.getElementById('administradoraInputCompra');
+
   var yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
   var lastSummaryText = '';
   var lastAgrupamentoText = '';
   var lastEvolucaoText = '';
+  var lastSummaryTextCompra = '';
+  var lastAgrupamentoTextCompra = '';
 
   function currencyToCents(str) {
     var digits = (str || '').replace(/\D/g, '');
@@ -525,6 +548,328 @@
     }
   }
 
+  // ---------- Modo Compra ----------
+
+  function attachPercentMask(input) {
+    input.addEventListener('blur', function () {
+      var raw = input.value.replace(/[^\d,.-]/g, '').replace(',', '.');
+      var num = parseFloat(raw);
+      if (isNaN(num)) { input.value = ''; return; }
+      input.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+    });
+  }
+
+  function parsePercentValue(str) {
+    var raw = (str || '').replace(/[^\d,.-]/g, '').replace(',', '.');
+    var num = parseFloat(raw);
+    return isNaN(num) ? null : num;
+  }
+
+  function attachOfertaLinkage(row) {
+    var creditoDispInput = row.querySelector('.credito-disponivel');
+    var percentInput = row.querySelector('.oferta-percent');
+    var valorInput = row.querySelector('.oferta-valor');
+    var lastEdited = null;
+
+    function getCreditoDisponivel() {
+      return currencyToCents(creditoDispInput.value) / 100;
+    }
+
+    function recomputeFromPercent() {
+      var credito = getCreditoDisponivel();
+      var percent = parsePercentValue(percentInput.value);
+      if (!credito || percent === null) return;
+      valorInput.value = formatCurrencyFromCents(Math.round(credito * (percent / 100) * 100));
+    }
+
+    function recomputeFromValor() {
+      var credito = getCreditoDisponivel();
+      var valor = currencyToCents(valorInput.value) / 100;
+      if (!credito) return;
+      percentInput.value = ((valor / credito) * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+    }
+
+    percentInput.addEventListener('input', function () {
+      lastEdited = 'percent';
+      recomputeFromPercent();
+    });
+
+    valorInput.addEventListener('input', function () {
+      lastEdited = 'valor';
+      recomputeFromValor();
+    });
+
+    creditoDispInput.addEventListener('input', function () {
+      if (lastEdited === 'percent') recomputeFromPercent();
+      else if (lastEdited === 'valor') recomputeFromValor();
+    });
+  }
+
+  function renumberCardsCompra() {
+    var rows = cardsContainerCompra.querySelectorAll('.card-row');
+    rows.forEach(function (row, i) {
+      row.setAttribute('data-index', i + 1);
+      row.querySelector('.card-number').textContent = i + 1;
+      var removeBtn = row.querySelector('.btn-remove-card');
+      removeBtn.style.display = rows.length > 1 ? '' : 'none';
+    });
+  }
+
+  function addCardCompra() {
+    var fragment = cardTemplateCompra.content.cloneNode(true);
+    var row = fragment.querySelector('.card-row');
+
+    attachCurrencyMask(row.querySelector('.credito-contratado'));
+    attachCurrencyMask(row.querySelector('.credito-disponivel'));
+    attachCurrencyMask(row.querySelector('.parcela'));
+    attachPrazoMask(row.querySelector('.prazo'));
+    attachCurrencyMask(row.querySelector('.oferta-valor'));
+    attachPercentMask(row.querySelector('.oferta-percent'));
+    attachOfertaLinkage(row);
+
+    row.querySelector('.btn-remove-card').addEventListener('click', function () {
+      row.remove();
+      renumberCardsCompra();
+    });
+
+    cardsContainerCompra.appendChild(row);
+    renumberCardsCompra();
+  }
+
+  function clearFieldsCompra() {
+    cardsContainerCompra.innerHTML = '';
+    addCardCompra();
+    segmentoSelectCompra.value = '';
+    indiceSelectCompra.value = '';
+    administradoraInputCompra.value = '';
+    hideErrorCompra();
+    resetResultsCompra();
+  }
+
+  function showErrorCompra(message) {
+    errorBoxCompra.textContent = message;
+    errorBoxCompra.style.display = '';
+  }
+
+  function hideErrorCompra() {
+    errorBoxCompra.style.display = 'none';
+  }
+
+  function resetResultsCompra() {
+    ['creditoContratadoTotal', 'creditoDisponivelTotal', 'ofertaTotal', 'saldoDevedorCompraTotal', 'taxaParcelaCompra', 'percentSaldoCompra', 'taxaTransferenciaCompra'].forEach(function (id) {
+      document.getElementById(id).textContent = '–';
+    });
+    agrupamentoParcelasCompra.innerHTML = '';
+    agrupamentoSectionCompra.hidden = true;
+    lastSummaryTextCompra = '';
+    lastAgrupamentoTextCompra = '';
+  }
+
+  function readCardsCompra() {
+    var rows = cardsContainerCompra.querySelectorAll('.card-row');
+    var cards = [];
+    var invalid = false;
+
+    rows.forEach(function (row) {
+      var creditoContratado = currencyToCents(row.querySelector('.credito-contratado').value) / 100;
+      var creditoDisponivel = currencyToCents(row.querySelector('.credito-disponivel').value) / 100;
+      var parcela = currencyToCents(row.querySelector('.parcela').value) / 100;
+      var prazo = parseInt(row.querySelector('.prazo').value.replace(/\D/g, ''), 10) || 0;
+      var ofertaValor = currencyToCents(row.querySelector('.oferta-valor').value) / 100;
+
+      if (!creditoDisponivel || !parcela || !prazo) {
+        invalid = true;
+      }
+
+      cards.push({
+        creditoContratado: creditoContratado,
+        creditoDisponivel: creditoDisponivel,
+        parcela: parcela,
+        prazo: prazo,
+        ofertaValor: ofertaValor
+      });
+    });
+
+    if (!segmentoSelectCompra.value || !indiceSelectCompra.value) {
+      invalid = true;
+    }
+
+    if (invalid) return null;
+    return cards;
+  }
+
+  function renderAgrupamentoCompra(groups) {
+    if (!groups.length) {
+      agrupamentoParcelasCompra.innerHTML = '';
+      agrupamentoSectionCompra.hidden = true;
+      return;
+    }
+    var html = '<div class="installment-list">';
+    groups.forEach(function (g) {
+      html += '<div class="installment-group">' +
+        '<span class="range">' + periodLabel(g) + '</span>' +
+        '<span class="value">' + formatBRL(g.value) + '</span>' +
+        '</div>';
+    });
+    html += '</div>';
+    agrupamentoParcelasCompra.innerHTML = html;
+    agrupamentoSectionCompra.hidden = false;
+  }
+
+  function buildAgrupamentoTextCompra(groups) {
+    var lines = [];
+    lines.push('*Agrupamento das parcelas – contemplei*');
+    lines.push('');
+    groups.forEach(function (g) {
+      lines.push(periodLabel(g) + ': ' + formatBRL(g.value));
+    });
+    return lines.join('\n');
+  }
+
+  function calcularCompra() {
+    hideErrorCompra();
+    var cards = readCardsCompra();
+
+    if (!cards || !cards.length) {
+      showErrorCompra('Preencha crédito disponível, parcela e prazo em todas as cartas, e selecione o segmento e o índice de reajuste, antes de calcular.');
+      resetResultsCompra();
+      return;
+    }
+
+    var totalCreditoContratado = 0;
+    var totalCreditoDisponivel = 0;
+    var totalOferta = 0;
+    var totalSaldoDevedor = 0;
+    var maxPrazo = 0;
+    var perCardPayments = [];
+
+    cards.forEach(function (card) {
+      totalCreditoContratado += card.creditoContratado;
+      totalCreditoDisponivel += card.creditoDisponivel;
+      totalOferta += card.ofertaValor;
+      maxPrazo = Math.max(maxPrazo, card.prazo);
+      var payments = buildMonthlyPayments(card);
+      perCardPayments.push(payments);
+      totalSaldoDevedor += card.parcela * card.prazo;
+    });
+
+    var monthlyTotals = [];
+    for (var t = 0; t < maxPrazo; t++) {
+      var sum = 0;
+      perCardPayments.forEach(function (payments) {
+        if (t < payments.length) sum += payments[t];
+      });
+      monthlyTotals.push(sum);
+    }
+
+    var taxaParcelaPercent = totalCreditoDisponivel !== 0 && monthlyTotals.length
+      ? (monthlyTotals[0] / totalCreditoDisponivel) * 100
+      : null;
+    var saldoPercent = totalCreditoDisponivel !== 0 ? (totalSaldoDevedor / totalCreditoDisponivel) * 100 : null;
+    var taxaTransferencia = totalCreditoDisponivel * 0.01;
+    var indiceLabel = INDEX_LABELS[indiceSelectCompra.value] || indiceSelectCompra.value;
+
+    document.getElementById('creditoContratadoTotal').textContent = formatBRL(totalCreditoContratado);
+    document.getElementById('creditoDisponivelTotal').textContent = formatBRL(totalCreditoDisponivel);
+    document.getElementById('ofertaTotal').textContent = formatBRL(totalOferta);
+    document.getElementById('saldoDevedorCompraTotal').textContent = formatBRL(totalSaldoDevedor);
+    document.getElementById('taxaParcelaCompra').textContent = taxaParcelaPercent !== null ? formatPercent(taxaParcelaPercent) : 'N/A';
+    document.getElementById('percentSaldoCompra').textContent = saldoPercent !== null ? formatPercent(saldoPercent) : 'N/A';
+    document.getElementById('taxaTransferenciaCompra').textContent = formatBRL(taxaTransferencia);
+
+    var groups = groupPayments(monthlyTotals);
+    renderAgrupamentoCompra(groups);
+    lastAgrupamentoTextCompra = buildAgrupamentoTextCompra(groups);
+
+    lastSummaryTextCompra = buildSummaryTextCompra(groups, {
+      totalCreditoDisponivel: totalCreditoDisponivel,
+      totalOferta: totalOferta,
+      totalSaldoDevedor: totalSaldoDevedor,
+      taxaTransferencia: taxaTransferencia,
+      indiceLabel: indiceLabel
+    });
+  }
+
+  function buildSummaryTextCompra(groups, r) {
+    var segmentoLabel = SEGMENTO_LABELS[segmentoSelectCompra.value] || segmentoSelectCompra.value;
+
+    var lines = [];
+    lines.push('📊 *Contemplei | Carta Contemplada – ' + segmentoLabel + '*');
+    lines.push('');
+    lines.push('→ Segmento: ' + segmentoLabel);
+    if (administradoraInputCompra.value.trim()) {
+      lines.push('→ Administradora: ' + administradoraInputCompra.value.trim());
+    }
+    lines.push('→ Índice de reajuste: ' + r.indiceLabel);
+    lines.push('');
+    lines.push('💰 *Resumo Oferta*');
+    lines.push('');
+    lines.push('• *Crédito total (R$):* ' + formatBRL(r.totalCreditoDisponivel));
+    lines.push('• *Oferta (R$):* ' + formatBRL(r.totalOferta));
+    lines.push('• *Saldo devedor:* ' + formatBRL(r.totalSaldoDevedor));
+    lines.push('• *Estimativa Transferência:* ' + formatBRL(r.taxaTransferencia) + ' (1% Crédito)');
+
+    if (groups.length) {
+      lines.push('');
+      lines.push('📆 *Fluxo das parcelas*');
+      groups.forEach(function (g) {
+        lines.push('→ ' + periodLabel(g) + ': ' + formatBRL(g.value));
+      });
+    }
+
+    lines.push('');
+    lines.push('🌐 Conheça a Contemplei:');
+    lines.push('https://contemplei.app');
+
+    return lines.join('\n');
+  }
+
+  function copySummaryCompra() {
+    if (!lastSummaryTextCompra) {
+      showErrorCompra('Calcule a oferta antes de copiar o resumo.');
+      return;
+    }
+    var done = function () {
+      copyFeedbackCompra.classList.add('visible');
+      setTimeout(function () { copyFeedbackCompra.classList.remove('visible'); }, 2500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(lastSummaryTextCompra).then(done).catch(function () {
+        fallbackCopy(lastSummaryTextCompra, done);
+      });
+    } else {
+      fallbackCopy(lastSummaryTextCompra, done);
+    }
+  }
+
+  function copyAgrupamentoCompra() {
+    if (!lastAgrupamentoTextCompra) {
+      showErrorCompra('Calcule a oferta antes de copiar o agrupamento das parcelas.');
+      return;
+    }
+    var done = function () {
+      copyAgrupamentoFeedbackCompra.classList.add('visible');
+      setTimeout(function () { copyAgrupamentoFeedbackCompra.classList.remove('visible'); }, 2500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(lastAgrupamentoTextCompra).then(done).catch(function () {
+        fallbackCopy(lastAgrupamentoTextCompra, done);
+      });
+    } else {
+      fallbackCopy(lastAgrupamentoTextCompra, done);
+    }
+  }
+
+  function switchMode(mode) {
+    var isVenda = mode === 'venda';
+    modeVenda.hidden = !isVenda;
+    modeCompra.hidden = isVenda;
+    tabVenda.classList.toggle('active', isVenda);
+    tabCompra.classList.toggle('active', !isVenda);
+    tabVenda.setAttribute('aria-selected', String(isVenda));
+    tabCompra.setAttribute('aria-selected', String(!isVenda));
+  }
+
   function fallbackCopy(text, done) {
     var textarea = document.createElement('textarea');
     textarea.value = text;
@@ -543,5 +888,15 @@
   btnCopiarAgrupamento.addEventListener('click', copyAgrupamento);
   btnCopiarEvolucao.addEventListener('click', copyEvolucao);
 
+  btnAddCardCompra.addEventListener('click', addCardCompra);
+  btnLimparCompra.addEventListener('click', clearFieldsCompra);
+  btnCalcularCompra.addEventListener('click', calcularCompra);
+  btnCopiarResumoCompra.addEventListener('click', copySummaryCompra);
+  btnCopiarAgrupamentoCompra.addEventListener('click', copyAgrupamentoCompra);
+
+  tabVenda.addEventListener('click', function () { switchMode('venda'); });
+  tabCompra.addEventListener('click', function () { switchMode('compra'); });
+
   addCard();
+  addCardCompra();
 })();

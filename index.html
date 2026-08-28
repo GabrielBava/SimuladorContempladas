@@ -32,6 +32,12 @@
       </div>
     </header>
 
+    <div class="mode-tabs" role="tablist">
+      <button type="button" class="mode-tab active" id="tabVenda" data-mode="venda" role="tab" aria-selected="true">Venda</button>
+      <button type="button" class="mode-tab" id="tabCompra" data-mode="compra" role="tab" aria-selected="false">Compra</button>
+    </div>
+
+    <div id="modeVenda" class="mode-panel">
     <div class="layout">
       <section class="card" aria-label="Simulação de consórcio">
         <h2>Preencha as cartas contempladas</h2>
@@ -194,6 +200,168 @@
         <span id="copyEvolucaoFeedback" class="copy-feedback">Evolução copiada! Cole no WhatsApp.</span>
       </div>
     </section>
+    </div>
+
+    <div id="modeCompra" class="mode-panel" hidden>
+    <div class="layout">
+      <section class="card" aria-label="Simulação de compra de carta">
+        <h2>Preencha as cartas para compra</h2>
+
+        <div class="global-options">
+          <div class="field">
+            <label>Segmento da carta</label>
+            <small>Facilita a identificação do resumo pelo cliente</small>
+            <select id="segmentoSelectCompra">
+              <option value="">Selecione o segmento</option>
+              <option value="IMOVEL">Imóvel</option>
+              <option value="VEICULO">Veículo</option>
+              <option value="SERVICO">Serviço</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Administradora</label>
+            <small>Administradora responsável pela cota</small>
+            <input type="text" id="administradoraInputCompra" placeholder="Ex: Porto Consórcio">
+          </div>
+
+          <div class="field">
+            <label>Índice de reajuste</label>
+            <small>Aplicado a todas as cartas da simulação</small>
+            <select id="indiceSelectCompra">
+              <option value="">Selecione o índice</option>
+              <option value="INCC">INCC</option>
+              <option value="IPCA">IPCA</option>
+              <option value="INPC">INPC</option>
+              <option value="PRE">PRÉ-FIXADO 5%</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="cardsContainerCompra"></div>
+
+        <template id="cardTemplateCompra">
+          <div class="card-row" data-index="1">
+            <div class="card-row-header">
+              <div class="card-row-title">Carta #<span class="card-number">1</span></div>
+              <button type="button" class="btn-remove-card">Remover</button>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label>Crédito</label>
+                <small>Crédito que foi contratado</small>
+                <input type="text" inputmode="numeric" class="input-currency credito-contratado" placeholder="Ex: R$ 200.000,00">
+              </div>
+
+              <div class="field">
+                <label>Crédito disponível</label>
+                <small>Crédito que tens disponível para uso</small>
+                <input type="text" inputmode="numeric" class="input-currency credito-disponivel" placeholder="Ex: R$ 128.000,00">
+              </div>
+
+              <div class="field">
+                <label>Parcela</label>
+                <small>Valor da prestação mensal</small>
+                <input type="text" inputmode="numeric" class="input-currency parcela" placeholder="Ex: R$ 720,00">
+              </div>
+
+              <div class="field">
+                <label>Prazo</label>
+                <small>Quantidade de parcelas a pagar</small>
+                <input type="text" inputmode="numeric" class="input-prazo prazo" placeholder="Ex: 232 meses">
+              </div>
+
+              <div class="field">
+                <label>% Valor Compra</label>
+                <small>Sobre o crédito disponível — preencha este ou o campo em R$</small>
+                <input type="text" inputmode="decimal" class="input-percent oferta-percent" placeholder="Ex: 21,88%">
+              </div>
+
+              <div class="field">
+                <label>R$ Valor Compra</label>
+                <small>Oferta em reais para essa carta</small>
+                <input type="text" inputmode="numeric" class="input-currency oferta-valor" placeholder="Ex: R$ 28.000,00">
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <p class="disclaimer-note">*Preencha % Valor Compra ou R$ Valor Compra — o outro campo é calculado automaticamente com base no crédito disponível.</p>
+
+        <div class="button-row">
+          <div id="errorCompra" class="error-msg" style="display:none;"></div>
+          <button type="button" class="btn-ghost" id="btnAddCardCompra">+ Adicionar carta</button>
+          <button type="button" class="btn-ghost" id="btnLimparCompra">Limpar campos</button>
+          <button type="button" class="btn-primary" id="btnCalcularCompra">
+            <span class="icon">➜</span>
+            Calcular oferta
+          </button>
+        </div>
+      </section>
+
+      <section class="card" aria-label="Resultados da oferta">
+        <h2>Resultado da oferta</h2>
+
+        <div class="results-grid">
+          <div class="result-item">
+            <div class="result-label">Crédito total (contratado)</div>
+            <div class="result-value" id="creditoContratadoTotal">–</div>
+          </div>
+
+          <div class="result-item">
+            <div class="result-label">Crédito disponível total</div>
+            <div class="result-value" id="creditoDisponivelTotal">–</div>
+          </div>
+
+          <div class="result-item">
+            <div class="result-label">Oferta total (R$)</div>
+            <div class="result-value" id="ofertaTotal">–</div>
+          </div>
+
+          <div class="result-item">
+            <div class="result-label">Saldo devedor total</div>
+            <div class="result-value" id="saldoDevedorCompraTotal">–</div>
+          </div>
+
+          <div class="result-item result-highlight">
+            <div class="result-label">Taxa Parcela</div>
+            <div class="result-value" id="taxaParcelaCompra">–</div>
+          </div>
+
+          <div class="result-item result-highlight">
+            <div class="result-label">% Saldo</div>
+            <div class="result-value" id="percentSaldoCompra">–</div>
+          </div>
+
+          <div class="result-item result-highlight">
+            <div class="result-label">R$ Taxa Transferência</div>
+            <div class="result-value" id="taxaTransferenciaCompra">–</div>
+          </div>
+        </div>
+
+        <div class="copy-row">
+          <button type="button" class="btn-ghost" id="btnCopiarResumoCompra">
+            Copiar resumo para WhatsApp
+          </button>
+          <span id="copyFeedbackCompra" class="copy-feedback">Resumo copiado! Cole no WhatsApp.</span>
+        </div>
+      </section>
+    </div>
+
+    <section class="card installment-card" aria-label="Agrupamento das parcelas" id="agrupamentoSectionCompra" hidden>
+      <h2>Agrupamento das Parcelas</h2>
+      <p class="disclaimer-note">Agrupado por faixa de meses com valor constante — visualize e, se quiser, copie separadamente para enviar ao cliente.</p>
+
+      <div id="agrupamentoParcelasCompra" class="installment-summary"></div>
+
+      <div class="copy-row">
+        <button type="button" class="btn-ghost" id="btnCopiarAgrupamentoCompra">
+          Copiar agrupamento de parcelas
+        </button>
+        <span id="copyAgrupamentoFeedbackCompra" class="copy-feedback">Agrupamento copiado! Cole no WhatsApp.</span>
+      </div>
+    </section>
+    </div>
 
     <footer>
       <span>© <span id="year">2026</span> contemplei – uso educativo, não é recomendação de investimento.</span>
